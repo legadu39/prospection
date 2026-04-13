@@ -1,0 +1,60 @@
+[
+  {
+    "id": "prop_firm_concept",
+    "keywords": [
+      "funding",
+      "capital",
+      "challenge",
+      "payout",
+      "prop firm",
+      "ftmo",
+      "apex"
+    ],
+    "content": "The Prop Firm model allows traders to manage significant capital (up to $300k) allocated by a firm after passing an evaluation. Traders keep up to 90% of profits (Profit Split). It solves the under-capitalization problem for skilled traders."
+  },
+  {
+    "id": "security_psan",
+    "keywords": [
+      "ledger",
+      "cold wallet",
+      "security",
+      "hack",
+      "protection",
+      "psan"
+    ],
+    "content": "In the crypto ecosystem, security is paramount. 'Not your keys, not your coins'. We recommend hardware wallets (Ledger) for long-term storage and PSAN-registered platforms for transactions to ensure regulatory compliance in Europe."
+  },
+  {
+    "id": "saas_trading_tools",
+    "keywords": [
+      "tradingview",
+      "indicators",
+      "charting",
+      "analysis",
+      "software"
+    ],
+    "content": "Professional trading requires professional tools. We partner with top-tier SaaS providers like TradingView to offer the best charting and analysis experience. Essential for passing Prop Firm challenges."
+  },
+  {
+    "id": "nexus_program",
+    "keywords": [
+      "nexus",
+      "system",
+      "join",
+      "affiliation",
+      "partner"
+    ],
+    "content": "Nexus Global is a media agency connecting traders with the best infrastructure. We provide educational resources and direct access to trusted funding partners and security tools. We do not provide financial advice."
+  },
+  {
+    "id": "risk_disclaimer",
+    "keywords": [
+      "risk",
+      "loss",
+      "guarantee",
+      "advice",
+      "scam"
+    ],
+    "content": "Trading involves significant risk. Most retail traders lose money. Never trade with money you cannot afford to lose. Nexus Global acts as a marketing intermediary and does not provide investment advice."
+  }
+]

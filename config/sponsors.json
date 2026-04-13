@@ -1,0 +1,114 @@
+{
+  "inventory_rules": {
+    "rotation_mode": "weighted_performance",
+    "geo_lock_strict": true,
+    "max_daily_cap_per_mandate": 9999,
+    "blacklisted_ips_path": "config/security/blacklist.txt"
+  },
+  "mandates": {
+    "ftmo_challenge_global": {
+      "id": "2026-PROP-001",
+      "sponsor_name": "FTMO",
+      "offer_type": "prop_firm_challenge",
+      "active": true,
+      "priority": 1,
+      "cpa_amount": 150.00,
+      "currency": "USD",
+      "target_url": "https://ftmo.com/en/?affiliate_id=NEXUS_GLOBAL",
+      "tags": ["trading", "funded_account", "global", "high_ticket"],
+      "allowed_geos": ["US", "UK", "CA", "AU", "NZ", "IE", "ZA", "AE"],
+      "conversion_trigger": "purchase_challenge"
+    },
+    "apex_trader_funding": {
+      "id": "2026-PROP-002",
+      "sponsor_name": "Apex Trader Funding",
+      "offer_type": "prop_firm_futures",
+      "active": true,
+      "priority": 1,
+      "cpa_amount": 100.00,
+      "currency": "USD",
+      "target_url": "https://apextraderfunding.com/member/aff/go/nexus_systems",
+      "tags": ["futures", "trading", "us_market", "low_latency"],
+      "allowed_geos": ["US", "UK", "CA", "AU", "NZ", "IE"],
+      "conversion_trigger": "subscription"
+    },
+    "topstep_trader": {
+      "id": "2026-PROP-003",
+      "sponsor_name": "TopStep",
+      "offer_type": "prop_firm_futures",
+      "active": true,
+      "priority": 1,
+      "cpa_amount": 100.00,
+      "currency": "USD",
+      "target_url": "https://topstep.com/ref/nexus",
+      "tags": ["futures", "trading", "us_market", "education"],
+      "allowed_geos": ["US", "UK", "CA", "AU"],
+      "conversion_trigger": "subscription"
+    },
+    "tradingview_saas": {
+      "id": "2026-SAAS-001",
+      "sponsor_name": "TradingView",
+      "offer_type": "saas_subscription",
+      "active": true,
+      "priority": 2,
+      "cpa_amount": 30.00,
+      "currency": "USD",
+      "target_url": "https://fr.tradingview.com/gopro/?share_your_love=nexus_charts",
+      "tags": ["charting", "tools", "utility", "saas"],
+      "allowed_geos": ["GLOBAL"],
+      "conversion_trigger": "trial_signup"
+    },
+    "nordvpn_global": {
+      "id": "2026-B2B-001",
+      "sponsor_name": "NordVPN",
+      "offer_type": "saas_security",
+      "active": true,
+      "priority": 3,
+      "cpa_amount": 40.00,
+      "currency": "USD",
+      "target_url": "https://nordvpn.com/ref/nexus",
+      "tags": ["security", "vpn", "b2b", "global"],
+      "allowed_geos": ["GLOBAL"],
+      "conversion_trigger": "subscription"
+    },
+    "meria_crypto_psan": {
+      "id": "2026-CRYPTO-FR",
+      "sponsor_name": "Meria",
+      "offer_type": "staking_investment",
+      "active": true,
+      "priority": 1,
+      "cpa_amount": 50.00,
+      "currency": "EUR",
+      "target_url": "https://meria.com/?p=NEXUS_SAFE",
+      "tags": ["crypto", "staking", "compliance_fr", "psan"],
+      "allowed_geos": ["FR", "BE", "LU", "CH", "MC"],
+      "conversion_trigger": "deposit_100"
+    },
+    "binance_exchange": {
+      "id": "2026-CRYPTO-001",
+      "sponsor_name": "Binance",
+      "offer_type": "exchange_signup",
+      "active": true,
+      "priority": 3,
+      "cpa_amount": 40.00,
+      "currency": "USDT",
+      "target_url": "https://accounts.binance.com/register?ref=NEXUS_V3",
+      "tags": ["crypto", "exchange", "volatility"],
+      "allowed_geos": ["GLOBAL_EXCEPT_US_FR"],
+      "conversion_trigger": "deposit_50"
+    },
+    "ledger_hardware": {
+      "id": "2026-HARDWARE-001",
+      "sponsor_name": "Ledger",
+      "offer_type": "ecom_hardware",
+      "active": true,
+      "priority": 2,
+      "cpa_amount": 10.00,
+      "currency": "EUR",
+      "target_url": "https://shop.ledger.com/?r=nexus_secure",
+      "tags": ["security", "crypto", "cold_storage"],
+      "allowed_geos": ["GLOBAL"],
+      "conversion_trigger": "sale"
+    }
+  }
+}

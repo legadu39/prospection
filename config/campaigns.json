@@ -1,0 +1,8 @@
+{
+  "nexus_global_v3": {
+    "router_endpoint": "/api/v1/smart-route",
+    "description": "Global Smart Router V3 - IP based redirection",
+    "fallback_offer": "tradingview_saas",
+    "status": "AUTO"
+  }
+}

@@ -1,0 +1,48 @@
+repos:
+  # --------------------------------------------------------------------------
+  # 1. Black — formatage automatique
+  # --------------------------------------------------------------------------
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        language_version: python3.10
+        args: [--line-length=100]
+
+  # --------------------------------------------------------------------------
+  # 2. Ruff — linter rapide (remplace flake8 + isort + pyupgrade)
+  # --------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+  # --------------------------------------------------------------------------
+  # 3. pytest tests/unit/ — tests rapides avant chaque commit
+  # --------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: pytest-unit
+        name: pytest (unit)
+        entry: python -m pytest tests/unit/ -x -q --no-header --no-cov
+        language: system
+        pass_filenames: false
+        always_run: true
+
+  # --------------------------------------------------------------------------
+  # 4. Détection de clés API en dur
+  #    Patterns : 'sk-', 'Bearer ' suivis de caractères non-whitespace
+  # --------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: detect-api-keys
+        name: Detect hardcoded API keys
+        language: pygrep
+        entry: "(sk-[A-Za-z0-9]{10,}|Bearer\\s+[A-Za-z0-9\\-._~+/]{8,})"
+        types: [python]
+        exclude: >
+          (?x)^(
+            tests/.*|
+            .*test.*\.py
+          )$

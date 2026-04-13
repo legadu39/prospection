@@ -1,0 +1,33 @@
+# --- EXCLUSION DES ARTEFACTS LOCAUX & DEAD CODE ---
+# Ignore les caches Python (conflit de version 3.10 vs 3.12)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore les environnements virtuels locaux
+venv/
+env/
+.env.local
+
+# Ignore les bases de données locales (ne pas écraser la DB prod)
+*.db
+*.sqlite
+*.sqlite3
+tiktok_guerilla.db
+
+# Ignore les logs locaux et screenshots de debug
+logs/
+*.log
+debug_screens/
+
+# Ignore les profils Chrome locaux (conflit de Lock Windows/Linux)
+chrome_profiles/
+
+# Ignore le code mort (Frontend React non utilisé)
+LandingPage.jsx
+
+# Ignore les fichiers de configuration IDE
+.vscode/
+.idea/
+.git/
+.gitignore

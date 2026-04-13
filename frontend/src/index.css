@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PIVOT STRATÉGIQUE: STYLE "NEO-BANK / REVOLUT"
+  Passage du Dark Mode (Cyberpunk) au Light Mode (Trust & Clarity).
+*/
+
+body {
+  @apply bg-slate-50 text-slate-900 font-sans antialiased;
+  /* Fond subtil "Trust Gradient" */
+  background-image: radial-gradient(circle at 10% 20%, rgba(239, 246, 255, 1) 0%, rgba(250, 250, 255, 1) 90%);
+  min-height: 100vh;
+}
+
+/* Redéfinition de la GlassCard pour le mode clair.
+  Effet "Verre givré" blanc avec ombres douces.
+*/
+.glass-card {
+  @apply bg-white/70 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl;
+}
+
+/* Typographie Premium */
+h1, h2, h3, h4, h5, h6 {
+  @apply text-slate-900 tracking-tight font-extrabold;
+}
+
+/* Sous-titres lisibles et rassurants */
+p {
+  @apply text-slate-500 font-medium leading-relaxed;
+}
+
+/* Utilitaires d'animation */
+@layer utilities {
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .ease-spring {
+    transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+}
+
+/* Scrollbar invisible mais fonctionnelle */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

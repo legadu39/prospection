@@ -1,0 +1,36 @@
+# Secrets & configuration locale
+.env
+*.env.local
+
+# Base de données locale
+*.db
+*.db-wal
+*.db-shm
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Dossiers runtime générés
+logs/
+chrome_profiles/
+locks/
+import/
+data/
+
+# Claude interne
+.claude/
+
+# Node (frontend)
+node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db

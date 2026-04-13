@@ -1,0 +1,61 @@
+{
+  "prop_firm": {
+    "funding": 5,
+    "capital": 5,
+    "challenge": 5,
+    "eval": 4,
+    "prop": 4,
+    "drawdown": 3,
+    "trade": 2,
+    "funded": 5,
+    "ftmo": 4,
+    "apex": 4,
+    "topstep": 4
+  },
+  "tradingview": {
+    "chart": 5,
+    "graphique": 4,
+    "analyse": 3,
+    "backtest": 4,
+    "données": 2,
+    "tradingview": 5,
+    "indicateur": 3
+  },
+  "binance": {
+    "binance": 5,
+    "crypto": 4,
+    "bitcoin": 3,
+    "btc": 3,
+    "eth": 2,
+    "trading": 2,
+    "usdt": 3,
+    "investir": 2
+  },
+  "meria": {
+    "meria": 5,
+    "just-mining": 5,
+    "mining": 4,
+    "yield": 3,
+    "staking": 3,
+    "rente": 3,
+    "passive": 3,
+    "masternode": 4,
+    "psan": 5
+  },
+  "ledger": {
+    "ledger": 5,
+    "securite": 4,
+    "cold": 4,
+    "wallet": 3,
+    "nano": 3,
+    "cle": 2
+  },
+  "etoro": {
+    "etoro": 5,
+    "copy": 4,
+    "social": 3,
+    "trader": 3,
+    "actions": 2,
+    "cfd": 1
+  }
+}
