@@ -1,15 +1,21 @@
 import subprocess
 import time
 import requests
-import sys
 import random
 import json
 import re
 from pathlib import Path
 from collections import deque
 
+
 class MobileRotator:
-    def __init__(self, adb_path="adb", max_history=5):
+    # Coordonnées par défaut du tile "Mode Avion" dans le panneau Quick Settings.
+    # Valeurs calibrées pour une résolution 1080x2400 (FHD+ courant).
+    # Surcharger via le constructeur pour un appareil différent.
+    DEFAULT_AIRPLANE_TAP_X = 180
+    DEFAULT_AIRPLANE_TAP_Y = 620
+
+    def __init__(self, adb_path="adb", max_history=5, airplane_tap_coords: tuple = None):
         """
         Contrôleur ADB Intelligent & Résilient.
         Intègre maintenant :
@@ -21,21 +27,28 @@ class MobileRotator:
         - Quality Gate: Test de latence pour le trading (Ping).
         """
         self.adb_path = adb_path
-        
+
+        # Coordonnées du tile Mode Avion (Stratégie 3)
+        if airplane_tap_coords:
+            self.airplane_tap_x, self.airplane_tap_y = airplane_tap_coords
+        else:
+            self.airplane_tap_x = self.DEFAULT_AIRPLANE_TAP_X
+            self.airplane_tap_y = self.DEFAULT_AIRPLANE_TAP_Y
+
         # Intelligence N°3 : Gestion de Contexte (Mémoire à court terme)
         self.ip_history = deque(maxlen=max_history)
-        
+
         # Intelligence N°4 : Redondance des Services
         self.ip_providers = [
             "https://api.ipify.org",
             "https://ifconfig.me/ip",
             "https://checkip.amazonaws.com",
             "https://icanhazip.com",
-            "https://api.myip.com"
+            "https://api.myip.com",
         ]
-        
+
         # État interne pour la stratégie ADB (Optimisation)
-        self.working_strategy = None 
+        self.working_strategy = None
 
         # Intelligence N°5 : Blacklist Volatile (Long Terme)
         self.bad_ip_file = Path("bad_ips.json")
@@ -44,7 +57,7 @@ class MobileRotator:
         # Intelligence N°6 : Score d'Hygiène IP (Resilience)
         # On démarre à 100%. Chaque requête baisse le score.
         self.current_ip_health = 100.0
-        self.decay_rate = 2.5 # Perte de santé par action majeure
+        self.decay_rate = 2.5  # Perte de santé par action majeure
 
         # Vérification de la connexion physique au démarrage
         self._check_device_connection()
@@ -56,7 +69,7 @@ class MobileRotator:
         try:
             with open(self.bad_ip_file, "r") as f:
                 data = json.load(f)
-            
+
             # Nettoyage automatique à l'initialisation
             now = time.time()
             clean_data = {ip: exp for ip, exp in data.items() if exp > now}
@@ -91,7 +104,7 @@ class MobileRotator:
         self.current_ip_health -= self.decay_rate
         # Add random noise to avoid robotic patterns
         self.current_ip_health -= random.uniform(0.1, 1.0)
-        
+
         if self.current_ip_health < 50:
             print(f"📉 Santé IP en baisse: {int(self.current_ip_health)}%")
 
@@ -110,11 +123,7 @@ class MobileRotator:
         full_cmd = f"{self.adb_path} shell {command}"
         try:
             result = subprocess.run(
-                full_cmd, 
-                shell=True, 
-                capture_output=True, 
-                text=True, 
-                timeout=10
+                full_cmd, shell=True, capture_output=True, text=True, timeout=10
             )
             return result.stdout.strip()
         except subprocess.TimeoutExpired:
@@ -127,7 +136,9 @@ class MobileRotator:
     def _check_device_connection(self):
         """Vérifie si un appareil est connecté via ADB."""
         try:
-            result = subprocess.run(f"{self.adb_path} devices", shell=True, capture_output=True, text=True)
+            result = subprocess.run(
+                f"{self.adb_path} devices", shell=True, capture_output=True, text=True
+            )
             if "device\n" not in result.stdout and "device\r" not in result.stdout:
                 print("🚨 AUCUN APPAREIL DÉTECTÉ ! Vérifiez le câble USB et le mode Debug.")
                 # On ne quitte pas, on espère un branchement à chaud
@@ -147,7 +158,7 @@ class MobileRotator:
             # -c 1 (count), -W 2 (timeout 2s)
             cmd = f"{self.adb_path} shell ping -c 1 -W 2 8.8.8.8"
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            
+
             if "0 packets received" in result.stdout:
                 return False
 
@@ -159,7 +170,7 @@ class MobileRotator:
                     print(f"⚠️ [LATENCE] Ping trop élevé ({ms}ms). IP instable pour le trading.")
                     return False
                 return True
-            return True # Fallback si pas de regex match mais ping ok
+            return True  # Fallback si pas de regex match mais ping ok
         except Exception:
             return False
 
@@ -168,7 +179,7 @@ class MobileRotator:
         # Mélange pour ne pas spammer toujours le même provider
         providers = self.ip_providers.copy()
         random.shuffle(providers)
-        
+
         for url in providers:
             try:
                 # Timeout court pour rapidité
@@ -178,26 +189,44 @@ class MobileRotator:
                     # Validation basique format IP
                     if len(ip) >= 7 and "." in ip:
                         return ip
-            except:
+            except Exception:
                 continue
         return None
 
     def _toggle_airplane_mode(self, enable):
         """Active ou désactive le mode avion via ADB."""
         state = "1" if enable else "0"
-        
+
         # Stratégie 1 : settings put (Android standard)
         if self.working_strategy is None or self.working_strategy == "settings":
             self._run_cmd(f"settings put global airplane_mode_on {state}")
-            self._run_cmd(f"am broadcast -a android.intent.action.AIRPLANE_MODE --ez state {state.lower() == '1'}")
-        
+            self._run_cmd(
+                f"am broadcast -a android.intent.action.AIRPLANE_MODE --ez state {state.lower() == '1'}"
+            )
+
         # Stratégie 2 : cmd connectivity (Android récents / Root)
         if self.working_strategy is None or self.working_strategy == "cmd":
             cmd_state = "enable" if enable else "disable"
             self._run_cmd(f"cmd connectivity airplane-mode {cmd_state}")
-            
-        # Stratégie 3 : input tap (Bourrin - à implémenter si besoin via coordonnées)
-        pass
+
+        # Stratégie 3 : input tap sur le tile Mode Avion dans Quick Settings
+        if self.working_strategy is None or self.working_strategy == "tap":
+            try:
+                # 1. Ouvrir le panneau Quick Settings (deux swipes depuis le haut)
+                self._run_cmd("cmd statusbar expand-settings")
+                time.sleep(0.6)
+
+                # 2. Tapper la tuile Mode Avion
+                self._run_cmd(f"input tap {self.airplane_tap_x} {self.airplane_tap_y}")
+                time.sleep(0.4)
+
+                # 3. Fermer le panneau Quick Settings
+                self._run_cmd("input keyevent 4")  # KEYCODE_BACK
+
+                if self.working_strategy is None:
+                    self.working_strategy = "tap"
+            except Exception as e:
+                print(f"⚠️ Stratégie 3 (tap) échouée : {e}")
 
     def rotate_ip(self):
         """
@@ -205,7 +234,7 @@ class MobileRotator:
         Retourne True si nouvelle IP obtenue, False sinon.
         """
         print("🔄 [ROTATION] Lancement du cycle de changement d'IP...")
-        
+
         old_ip = self.get_current_ip()
         if not old_ip:
             print("⚠️ Impossible de récupérer l'IP actuelle. On tente quand même la rotation.")
@@ -216,40 +245,44 @@ class MobileRotator:
         for i in range(max_retries):
             # 1. Mode Avion ON
             self._toggle_airplane_mode(True)
-            time.sleep(1.5) # Laisser le temps au modem de couper
-            
+            time.sleep(1.5)  # Laisser le temps au modem de couper
+
             # 2. Mode Avion OFF
             self._toggle_airplane_mode(False)
-            
+
             # 3. Attente active (Smart Polling)
             # On check toutes les 1s si le réseau est revenu
             network_back = False
-            for _ in range(15): # Max 15 secondes
-                if self.get_current_ip(): # Si on a une IP, le réseau est là
+            for _ in range(15):  # Max 15 secondes
+                if self.get_current_ip():  # Si on a une IP, le réseau est là
                     network_back = True
                     break
                 time.sleep(1)
-            
+
             if not network_back:
                 print("⚠️ Réseau lent à revenir. Nouvelle tentative...")
                 continue
 
             # 4. Vérification de la nouvelle IP
             new_ip = self.get_current_ip()
-            
+
             if not new_ip:
                 print("⚠️ Pas d'IP visible malgré le réseau mobile.")
                 continue
-                
+
             if new_ip == old_ip:
-                print(f"⚠️ [MÊME IP] L'opérateur a renvoyé la même IP ({new_ip}). Nouvelle tentative...")
+                print(
+                    f"⚠️ [MÊME IP] L'opérateur a renvoyé la même IP ({new_ip}). Nouvelle tentative..."
+                )
                 continue
-                
+
             # Intelligence N°3 : Détection de Cycle (IP déjà vue récemment)
             if new_ip in self.ip_history:
-                print(f"♻️ [CYCLE DÉTECTÉ] IP {new_ip} déjà utilisée récemment. On force une nouvelle rotation.")
+                print(
+                    f"♻️ [CYCLE DÉTECTÉ] IP {new_ip} déjà utilisée récemment. On force une nouvelle rotation."
+                )
                 continue
-            
+
             # Intelligence N°5 : Vérification Blacklist Long Terme
             if new_ip in self.bad_ips:
                 if time.time() < self.bad_ips[new_ip]:
@@ -264,7 +297,7 @@ class MobileRotator:
             if not self._check_latency():
                 print(f"🐢 [LATENCE] IP {new_ip} fonctionnelle mais trop lente. On la jette.")
                 # On ajoute une punition courte (5 min) pour ne pas la reprendre tout de suite
-                self.report_bad_ip(new_ip, duration=300) 
+                self.report_bad_ip(new_ip, duration=300)
                 continue
 
             # --- SUCCÈS ---
@@ -274,8 +307,11 @@ class MobileRotator:
             print(f"✅ [SUCCÈS] Nouvelle IP Fraîche : {new_ip} (Santé: 100%)")
             return True
 
-        print("🚨 [FATAL] Impossible d'obtenir une nouvelle IP unique et rapide après plusieurs essais.")
+        print(
+            "🚨 [FATAL] Impossible d'obtenir une nouvelle IP unique et rapide après plusieurs essais."
+        )
         return False
+
 
 if __name__ == "__main__":
     rotator = MobileRotator()
