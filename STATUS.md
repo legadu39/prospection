@@ -140,13 +140,11 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ---
 
-### `core/vision_guardian.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.settings` · `playwright` · `PIL`  
+### `core/vision_guardian.py` — ✅ Complet
+**Dépendances :** `core.database` ✅ · `core.settings` ✅ · `playwright` · `PIL`  
 **Rôle :** Analyse visuelle — détection captcha, crash handler, apprentissage sélecteurs DOM  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
-- Ligne 141 : `pass + TODO` — SELECT sur table `dom_knowledge` non implémenté
-- Ligne 181 : `pass` — sauvegarde des sélecteurs DOM non implémentée
+**Ce qui manque :** Rien  
+**Implémenté :** `_load_memory()` SELECT sur `dom_knowledge` (merge hive→local) · `_update_stats()` UPSERT vers `dom_knowledge` (swarm push) · Migration V14 ajoutée dans `secure_telemetry_store.py`
 
 ---
 
