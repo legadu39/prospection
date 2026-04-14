@@ -62,12 +62,11 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ---
 
-### `core/ad_exchange_server.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.settings` ✅ · `fastapi` · `uvicorn`  
+### `core/ad_exchange_server.py` — ✅ Complet
+**Dépendances :** `core.database` ✅ · `core.settings` ✅ · `fastapi` · `uvicorn`  
 **Rôle :** Serveur FastAPI — allocation programmatique, geo-routing, pacing, postback attribution  
-**Ce qui manque :**
-- `from core.database import NexusDB` → `ImportError` tant que `core/database.py` absent
-- Endpoint `/health` manquant (monitoring Docker)
+**Ce qui manque :** Rien  
+**Implémenté :** `GET /health` — vérifie la connectivité DB + compte sponsors actifs, HTTP 200 si ok, 503 si DB unreachable.
 
 ---
 
