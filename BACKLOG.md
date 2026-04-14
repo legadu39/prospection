@@ -54,7 +54,7 @@
 |----|--------|-------|--------|------------|--------|
 | P3-1 | ✅ | Ajouter `__init__.py` à tous les packages | **S** | `core/`, `channels/`, `channels/tiktok/`, `channels/reddit/`, `channels/email/`, `config/` | Absents. Rend les imports relatifs fragiles selon l'environnement Python. |
 | P3-2 | ✅ | Endpoint `/health` dans `ad_exchange_server.py` | **S** | `core/ad_exchange_server.py` | Manquant pour healthcheck Docker/K8s. Retourner `{"status":"ok","db":"connected","sponsors_loaded":N}`. |
-| P3-3 | ⬜ | Tests unitaires `workload_orchestrator.py` | **M** | `core/workload_orchestrator.py` | Logique UCB1, scarcity curve, PID, fuzzy matching — code financier critique sans couverture. Tester `infer_process_type()`, `_calculate_ucb1_score()`, `attempt_atomic_allocation()`. |
+| P3-3 | ✅ | Tests unitaires `workload_orchestrator.py` | **M** | `core/workload_orchestrator.py` | Logique UCB1, scarcity curve, PID, fuzzy matching — code financier critique sans couverture. Tester `infer_process_type()`, `_calculate_ucb1_score()`, `attempt_atomic_allocation()`. |
 | P3-4 | ⬜ | Tests unitaires `secure_telemetry_store.py` (NexusDB) | **L** | `core/secure_telemetry_store.py` | Couche DB critique sans aucun test. Utiliser SQLite `:memory:`. |
 | P3-5 | ✅ | Externaliser `PARTNER_YIELD_TIERS` vers `config/sponsors.json` | **S** | `core/workload_orchestrator.py:75-101` | Tiers de payout hardcodés (APEX=150€, LEDGER=60€…). Doit vivre dans `sponsors.json` pour être ajustable sans redéploiement. |
 | P3-6 | ✅ | Gérer `asyncio.CancelledError` dans `pipeline_bridge.py` | **S** | `pipeline_bridge.py:run_pipeline()` | Boucle principale ne catch pas `CancelledError` → shutdown brutal sans cleanup DB. |
@@ -72,8 +72,8 @@
 | **P0** | 4 | 4 | ~0h | Le projet démarre |
 | **P1** | 5 | 5 | ~0h | Features core fonctionnelles ✅ |
 | **P2** | 4 | 4 | ~0h | Comportement correct en prod ✅ |
-| **P3** | 10 | 5 | ~10h | Dette technique et robustesse |
-| **Total** | **23** | **18** | **~10h** | |
+| **P3** | 10 | 6 | ~7h | Dette technique et robustesse |
+| **Total** | **23** | **19** | **~7h** | |
 
 ---
 
