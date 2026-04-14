@@ -219,12 +219,11 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ---
 
-### `channels/reddit/sender.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.browser_engine` · `core.time_manager` · `core.vision_guardian` · `core.humanizer`  
+### `channels/reddit/sender.py` — ✅ Complet
+**Dépendances :** `core.database` ✅ · `core.browser_engine` · `core.time_manager` · `core.vision_guardian` · `core.humanizer`  
 **Rôle :** Community gateway v28.0 — `RedditCommunityGateway`, DCO geo-routing FR/US, reputation gate, persistent memory  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
-- Ligne 508-510 : détection de succès fragile (vérif input vide post-submit)
+**Ce qui manque :** Rien  
+**Implémenté :** Détection succès par `page.expect_response()` sur `/api/comment`, `/svc/shreddit/graphql`, `gateway.reddit.com` (HTTP 200 = succès). Fallback sur vérification champ texte si timeout.
 
 ---
 
