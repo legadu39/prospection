@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write  # needed to create the GitHub Release
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history needed to compute diff between tags
+          fetch-depth: 0
+
+      # ── Generate changelog from git log ─────────────────────────────────────
+      - name: Generate changelog
+        id: changelog
+        shell: bash
+        run: |
+          TAG="${{ github.ref_name }}"
+
+          # Find the previous semver tag (skip the current one)
+          PREV_TAG=$(git tag --sort=-version:refname \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]' \
+            | grep -v "^${TAG}$" \
+            | head -1)
+
+          if [ -z "$PREV_TAG" ]; then
+            RANGE="$TAG"
+            SINCE_MSG="(first release)"
+          else
+            RANGE="${PREV_TAG}..${TAG}"
+            SINCE_MSG="since \`${PREV_TAG}\`"
+          fi
+
+          echo "prev_tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
+          echo "since_msg=${SINCE_MSG}" >> "$GITHUB_OUTPUT"
+
+          # Build per-type sections from conventional commit prefixes
+          FEATURES=$(git log "$RANGE" --pretty=format:"- %s (%h)" --no-merges \
+            | grep -E "^- (feat|add|new)" || true)
+          FIXES=$(git log "$RANGE" --pretty=format:"- %s (%h)" --no-merges \
+            | grep -E "^- (fix|bug|patch)" || true)
+          PERF=$(git log "$RANGE" --pretty=format:"- %s (%h)" --no-merges \
+            | grep -E "^- (perf|optim|refactor)" || true)
+          INFRA=$(git log "$RANGE" --pretty=format:"- %s (%h)" --no-merges \
+            | grep -E "^- (ci|chore|build|deps|test|docs)" || true)
+          OTHER=$(git log "$RANGE" --pretty=format:"- %s (%h)" --no-merges \
+            | grep -Ev "^- (feat|add|new|fix|bug|patch|perf|optim|refactor|ci|chore|build|deps|test|docs)" || true)
+
+          # Assemble body, only print non-empty sections
+          BODY=""
+          [ -n "$FEATURES" ] && BODY="${BODY}### Features\n${FEATURES}\n\n"
+          [ -n "$FIXES"    ] && BODY="${BODY}### Bug Fixes\n${FIXES}\n\n"
+          [ -n "$PERF"     ] && BODY="${BODY}### Performance & Refactoring\n${PERF}\n\n"
+          [ -n "$INFRA"    ] && BODY="${BODY}### CI / Infra / Docs\n${INFRA}\n\n"
+          [ -n "$OTHER"    ] && BODY="${BODY}### Other\n${OTHER}\n\n"
+
+          if [ -z "$BODY" ]; then
+            BODY="No notable changes logged."
+          fi
+
+          # Write to $GITHUB_OUTPUT using multiline delimiter
+          echo "body<<CHANGELOG_EOF" >> "$GITHUB_OUTPUT"
+          printf "## What's Changed %s\n\n" "$SINCE_MSG" >> "$GITHUB_OUTPUT"
+          printf "%b" "$BODY" >> "$GITHUB_OUTPUT"
+          printf "\n**Full diff**: https://github.com/${{ github.repository }}/compare/%s...%s\n" \
+            "${PREV_TAG:-$(git rev-list --max-parents=0 HEAD)}" "$TAG" >> "$GITHUB_OUTPUT"
+          echo "CHANGELOG_EOF" >> "$GITHUB_OUTPUT"
+
+      # ── Detect pre-release tags (v1.2.3-rc1, -beta, -alpha) ─────────────────
+      - name: Detect pre-release
+        id: semver
+        run: |
+          if echo "${{ github.ref_name }}" | grep -qE '\-(alpha|beta|rc)[0-9]*$'; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ── Create the GitHub Release ────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "Release ${{ github.ref_name }}"
+          body: ${{ steps.changelog.outputs.body }}
+          draft: false
+          prerelease: ${{ steps.semver.outputs.prerelease }}
+          make_latest: ${{ steps.semver.outputs.prerelease == 'false' }}
