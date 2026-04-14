@@ -41,7 +41,7 @@
 |----|--------|-------|--------|------------|--------|
 | P2-1 | ✅ | Implémenter la lecture `dom_knowledge` dans `vision_guardian.py` | **M** | `core/vision_guardian.py:139-142` | `pass + TODO` — le SELECT sur la table `dom_knowledge` n'est pas implémenté. VisionGuardian repart de zéro à chaque redémarrage, sans capitaliser sur les sélecteurs DOM qui ont fonctionné. |
 | P2-2 | ✅ | Implémenter la sauvegarde sélecteur dans `vision_guardian.py` | **S** | `core/vision_guardian.py:179-181` | `pass` — les sélecteurs DOM découverts dynamiquement ne sont pas persistés en DB. Symétriquement critique avec P2-1. |
-| P2-3 | ⬜ | Compléter la stratégie 3 de `mobile_rotator.py` | **S** | `core/mobile_rotator.py:199-200` | `pass` explicite + commentaire "input tap à implémenter via coordonnées". Bloquant si la rotation IP 4G par ADB doit utiliser la stratégie tap direct. |
+| P2-3 | ✅ | Compléter la stratégie 3 de `mobile_rotator.py` | **S** | `core/mobile_rotator.py:199-200` | `pass` explicite + commentaire "input tap à implémenter via coordonnées". Bloquant si la rotation IP 4G par ADB doit utiliser la stratégie tap direct. |
 | P2-4 | ⬜ | Fiabiliser la détection de succès dans `reddit/sender.py` | **S** | `channels/reddit/sender.py:508-510` | `if not input.is_visible() or input_value() == ""` est fragile : faux positifs si Reddit rafraîchit la page. Implémenter un listener sur la réponse réseau (HTTP 200 de l'API commentaire) pour une confirmation fiable. |
 
 ---
@@ -71,7 +71,7 @@
 |----------|--------|---------|----------------|----------|
 | **P0** | 4 | 4 | ~0h | Le projet démarre |
 | **P1** | 5 | 5 | ~0h | Features core fonctionnelles ✅ |
-| **P2** | 4 | 2 | ~2h | Comportement correct en prod |
+| **P2** | 4 | 4 | ~0h | Comportement correct en prod ✅ |
 | **P3** | 10 | 0 | ~15h | Dette technique et robustesse |
 | **Total** | **23** | **2** | **~28h** | |
 

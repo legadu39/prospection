@@ -101,12 +101,11 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ---
 
-### `core/mobile_rotator.py` — 🔄 Partiel
+### `core/mobile_rotator.py` — ✅ Complet
 **Dépendances :** `core.settings`  
-**Rôle :** Rotation IP via Android/ADB (airplaine mode toggle + ADB shell)  
-**Ce qui manque :**
-- Ligne 200 : `pass` avec commentaire "Stratégie 3 : input tap — à implémenter si besoin via coordonnées"
-- Stratégie 3 non implémentée (interaction tap directe par coordonnées)
+**Rôle :** Rotation IP via Android/ADB (airplane mode toggle + ADB shell)  
+**Ce qui manque :** Rien  
+**Implémenté :** Stratégie 3 — `cmd statusbar expand-settings` + `input tap {x} {y}` + `KEYCODE_BACK`. Coordonnées configurables via `airplane_tap_coords` au constructeur (défaut 180×620 pour FHD+ 1080×2400).
 
 ---
 
