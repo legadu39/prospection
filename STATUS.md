@@ -34,7 +34,8 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 ### `pipeline_bridge.py` — ✅ Complet
 **Dépendances :** `core.database` ✅ · `core.dispatcher` ✅ · `core.gemini_processor` ✅ · `core.prompts` ✅ · `core.logger_utils` ✅  
 **Rôle :** Pipeline IA principal (triage sémantique, PID backpressure, fast-track, smart retry)  
-**Ce qui manque :** Rien
+**Ce qui manque :** Rien  
+**Implémenté (P3-6) :** `run_pipeline()` gère `CancelledError` proprement via `try/finally` — annule watchdog task, sauvegarde `KeywordLearner`, ferme `db.close()` avant exit.
 
 ---
 
