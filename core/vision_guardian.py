@@ -14,7 +14,6 @@ VISION GUARDIAN V26.0.0 - INTELLIGENT & CONTEXT AWARE
 7. Visual Stasis Detector : Détection de freeze par analyse différentielle de pixels (Non-AI).
 """
 
-import os
 import logging
 import asyncio
 import aiohttp
@@ -24,13 +23,13 @@ import time
 import json
 import hashlib
 import shutil
-import random
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, List, Any
 
 try:
     from core.settings import settings
+
     # Ajout V26: Import DB pour Swarm Learning
     from core.database import NexusDB
 except ImportError:
@@ -46,6 +45,7 @@ logger = logging.getLogger("VisionGuardian")
 
 try:
     import google.generativeai as genai
+
     HAS_GENAI = True
 except ImportError:
     HAS_GENAI = False
@@ -59,11 +59,13 @@ except ImportError:
 # Fichier de mémoire musculaire locale (Cache)
 MEMORY_FILE = settings.BASE_DIR / "core" / "dom_muscle_memory.json"
 
+
 class VisualStasisDetector:
     """
     Détecte si une page est visuellement gelée (Freeze/Spinner infini)
     en comparant des signatures légères de screenshots.
     """
+
     def __init__(self):
         self._last_snapshot_hash = None
         self._last_snapshot_time = 0
@@ -72,7 +74,7 @@ class VisualStasisDetector:
         """Capture un hash rapide de l'écran actuel."""
         try:
             # Screenshot en basse résolution binaire (optimisé vitesse)
-            png_bytes = await page.screenshot(type='png', scale="css", quality=50)
+            png_bytes = await page.screenshot(type="png", scale="css", quality=50)
             return hashlib.md5(png_bytes).hexdigest()
         except Exception:
             return None
@@ -80,28 +82,31 @@ class VisualStasisDetector:
     async def is_frozen(self, page, interval: float = 2.0) -> bool:
         """Retourne True si l'écran n'a pas changé d'un pixel en 'interval' secondes alors qu'il devrait bouger."""
         current_hash = await self.capture_signature(page)
-        if not current_hash: return False
+        if not current_hash:
+            return False
 
         now = time.time()
-        is_static = (current_hash == self._last_snapshot_hash)
-        
+        is_static = current_hash == self._last_snapshot_hash
+
         # Mise à jour
         if not is_static:
             self._last_snapshot_hash = current_hash
             self._last_snapshot_time = now
             return False
-        
+
         # Si statique depuis plus longtemps que l'intervalle
         if (now - self._last_snapshot_time) > interval:
             return True
-            
+
         return False
+
 
 class DOMHealer:
     """
     INTELLIGENCE N°1 (SWARM LEARNING) : Persistent Self-Healing DOM with Hive Memory.
     Utilise une base de données partagée pour synchroniser les sélecteurs valides entre tous les bots.
     """
+
     _memory: Dict[str, List[Dict[str, Any]]] = {}
     _loaded = False
     _db_instance = None
@@ -112,7 +117,9 @@ class DOMHealer:
             try:
                 cls._db_instance = NexusDB()
             except Exception as e:
-                logger.warning(f"⚠️ DOMHealer: Impossible de connecter la DB ({e}). Mode Local uniquement.")
+                logger.warning(
+                    f"⚠️ DOMHealer: Impossible de connecter la DB ({e}). Mode Local uniquement."
+                )
         return cls._db_instance
 
     @classmethod
@@ -122,7 +129,7 @@ class DOMHealer:
         if not cls._loaded:
             if MEMORY_FILE.exists():
                 try:
-                    with open(MEMORY_FILE, 'r', encoding='utf-8') as f:
+                    with open(MEMORY_FILE, "r", encoding="utf-8") as f:
                         cls._memory = json.load(f)
                 except Exception:
                     cls._memory = {}
@@ -133,20 +140,43 @@ class DOMHealer:
         db = cls._get_db()
         if db:
             try:
-                # Simulation d'une table Key-Value ou JSON store dans la DB
-                # Si la table n'existe pas, on ignore silencieusement
                 with db.session() as conn:
-                    # On suppose une table générique 'system_memory' ou similaire
-                    # Pour éviter de casser le schéma, on utilise une logique défensive
-                    pass 
-                    # TODO: Implémenter le SELECT réel quand la table 'dom_knowledge' sera migrée
-            except Exception:
-                pass
+                    rows = conn.execute(
+                        "SELECT key_id, selector, success_count, fail_count, weight FROM dom_knowledge"
+                    ).fetchall()
+                    for row in rows:
+                        key_id = row["key_id"] if hasattr(row, "keys") else row[0]
+                        selector = row["selector"] if hasattr(row, "keys") else row[1]
+                        s_count = row["success_count"] if hasattr(row, "keys") else row[2]
+                        f_count = row["fail_count"] if hasattr(row, "keys") else row[3]
+                        weight = row["weight"] if hasattr(row, "keys") else row[4]
+                        # Merge : la DB (hive) est autoritaire sur les entrées qu'elle connaît
+                        if key_id not in cls._memory:
+                            cls._memory[key_id] = []
+                        existing = next(
+                            (c for c in cls._memory[key_id] if c["selector"] == selector), None
+                        )
+                        if existing:
+                            # Fusionner les stats : on prend le max des compteurs
+                            existing["success"] = max(existing.get("success", 0), s_count or 0)
+                            existing["fail"] = max(existing.get("fail", 0), f_count or 0)
+                            existing["weight"] = float(weight or 0.5)
+                        else:
+                            cls._memory[key_id].append(
+                                {
+                                    "selector": selector,
+                                    "success": s_count or 0,
+                                    "fail": f_count or 0,
+                                    "weight": float(weight or 0.5),
+                                }
+                            )
+            except Exception as e:
+                logger.debug(f"DOMHealer swarm pull skipped: {e}")
 
     @classmethod
     def _save_memory(cls):
         try:
-            with open(MEMORY_FILE, 'w', encoding='utf-8') as f:
+            with open(MEMORY_FILE, "w", encoding="utf-8") as f:
                 json.dump(cls._memory, f, indent=2)
         except Exception as e:
             logger.warning(f"⚠️ Impossible de sauvegarder la mémoire DOM: {e}")
@@ -158,38 +188,62 @@ class DOMHealer:
         """
         if key not in cls._memory:
             cls._memory[key] = []
-        
+
         # Recherche du candidat local
-        candidate = next((c for c in cls._memory[key] if c['selector'] == selector_used), None)
-        
+        candidate = next((c for c in cls._memory[key] if c["selector"] == selector_used), None)
+
         if not candidate:
             candidate = {"selector": selector_used, "success": 0, "fail": 0, "weight": 0.5}
             cls._memory[key].append(candidate)
-        
+
         if success:
-            candidate['success'] += 1
+            candidate["success"] += 1
             # Renforcement positif
-            candidate['weight'] = min(0.99, candidate['weight'] * 1.1)
-            
+            candidate["weight"] = min(0.99, candidate["weight"] * 1.1)
+
             # --- SWARM PUSH (Intelligence Collective) ---
-            # Si un sélecteur fonctionne, on l'annonce aux autres via la DB
+            # Propagation du sélecteur validé vers la DB partagée (hive mind)
             db = cls._get_db()
             if db:
                 try:
-                     # Logique "Fire and Forget" pour ne pas ralentir le bot
-                     # On utilise une convention de stockage simple si possible
-                     pass 
-                except Exception:
-                    pass
+                    now = time.time()
+                    with db.session() as conn:
+                        conn.execute(
+                            """
+                            INSERT INTO dom_knowledge (key_id, selector, success_count, fail_count, weight, updated_at)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                            ON CONFLICT(key_id, selector) DO UPDATE SET
+                                success_count = dom_knowledge.success_count + 1,
+                                weight        = MIN(0.99, excluded.weight),
+                                updated_at    = excluded.updated_at
+                        """,
+                            (
+                                key,
+                                selector_used,
+                                candidate["success"],
+                                candidate["fail"],
+                                candidate["weight"],
+                                now,
+                            ),
+                        )
+                except Exception as e:
+                    logger.debug(f"DOMHealer swarm push skipped: {e}")
         else:
-            candidate['fail'] += 1
+            candidate["fail"] += 1
             # Pénalité
-            candidate['weight'] = max(0.01, candidate['weight'] * 0.8)
-            
+            candidate["weight"] = max(0.01, candidate["weight"] * 0.8)
+
         cls._save_memory()
 
     @classmethod
-    async def smart_click(cls, page, key_id: str, default_selector: str, fallbacks: List[str] = None, timeout: int = 3000):
+    async def smart_click(
+        cls,
+        page,
+        key_id: str,
+        default_selector: str,
+        fallbacks: List[str] = None,
+        timeout: int = 3000,
+    ):
         """
         Tente de cliquer intelligemment en utilisant la mémoire musculaire.
         :param key_id: Identifiant unique de l'action (ex: 'tiktok_login_btn')
@@ -197,26 +251,31 @@ class DOMHealer:
         :param fallbacks: Liste de sélecteurs alternatifs (XPath, Text...)
         """
         cls._load_memory()
-        
+
         # 1. Construction de la liste des candidats (Mémoire + Defaut + Fallbacks)
-        candidates_map = {default_selector: 0.5} # Poids par défaut
+        candidates_map = {default_selector: 0.5}  # Poids par défaut
         if fallbacks:
-            for f in fallbacks: candidates_map[f] = 0.3
-            
+            for f in fallbacks:
+                candidates_map[f] = 0.3
+
         # Fusion avec la mémoire
         memory_entries = cls._memory.get(key_id, [])
         for entry in memory_entries:
-            candidates_map[entry['selector']] = entry['weight']
-            
+            candidates_map[entry["selector"]] = entry["weight"]
+
         # 2. Tri par poids décroissant (Le meilleur gagne)
         sorted_candidates = sorted(candidates_map.items(), key=lambda x: x[1], reverse=True)
-        
+
         last_error = None
-        
+
         for selector, weight in sorted_candidates:
             try:
                 # Heuristique : Si poids très faible (< 0.1), on ne tente que si c'est le dernier espoir
-                if weight < 0.1 and len(sorted_candidates) > 1 and selector != sorted_candidates[-1][0]:
+                if (
+                    weight < 0.1
+                    and len(sorted_candidates) > 1
+                    and selector != sorted_candidates[-1][0]
+                ):
                     continue
 
                 if selector.startswith("text="):
@@ -234,16 +293,17 @@ class DOMHealer:
                 else:
                     # Visible check failed
                     cls._update_stats(key_id, selector, False)
-                    
+
             except Exception as e:
                 last_error = e
                 cls._update_stats(key_id, selector, False)
                 continue
-                
+
         # Si tout échoue
         if last_error:
             logger.warning(f"❌ DOMHealer: Échec total pour '{key_id}'.")
         return False
+
 
 class VisionGuardian:
     """
@@ -256,26 +316,30 @@ class VisionGuardian:
         self.debug_dir.mkdir(parents=True, exist_ok=True)
         self._is_closing = False
         self.privacy_mode = privacy_mode
-        
+
         # Intelligent Alert Deduplication
         self.error_history: Dict[str, float] = {}
         self.deduplication_window = 300.0
-        
+
         # Upload Throttling
         self.upload_semaphore = asyncio.Semaphore(2)
-        
+
         # Stasis Detector (Nouveau)
         self.stasis_detector = VisualStasisDetector()
-        
+
         # Maintenance automatique au démarrage
         asyncio.create_task(self._async_cleanup_old_screenshots())
-        
+
         self.model = None
         if HAS_GENAI and settings.GEMINI_API_KEY:
             try:
-                api_key_val = settings.GEMINI_API_KEY.get_secret_value() if hasattr(settings.GEMINI_API_KEY, 'get_secret_value') else settings.GEMINI_API_KEY
+                api_key_val = (
+                    settings.GEMINI_API_KEY.get_secret_value()
+                    if hasattr(settings.GEMINI_API_KEY, "get_secret_value")
+                    else settings.GEMINI_API_KEY
+                )
                 genai.configure(api_key=api_key_val)
-                self.model = genai.GenerativeModel('gemini-1.5-flash')
+                self.model = genai.GenerativeModel("gemini-1.5-flash")
                 logger.info("✅ VisionGuardian connecté à Gemini Flash.")
             except Exception as e:
                 logger.error(f"❌ Erreur init Gemini: {e}")
@@ -292,18 +356,18 @@ class VisionGuardian:
         try:
             total, used, free = shutil.disk_usage(self.debug_dir)
             usage_percent = (used / total) * 100
-            
+
             retention_days = default_retention
-            
+
             if usage_percent > 90:
-                retention_days = 1 / 24 # 1 heure
+                retention_days = 1 / 24  # 1 heure
             elif usage_percent > 80:
                 retention_days = 1
-            
+
             now = time.time()
             cutoff = now - (retention_days * 86400)
             count = 0
-            
+
             for f in self.debug_dir.glob("*.png"):
                 try:
                     if f.stat().st_mtime < cutoff:
@@ -311,9 +375,11 @@ class VisionGuardian:
                         count += 1
                 except OSError:
                     continue
-            
+
             if count > 0:
-                logger.info(f"🧹 VisionGuardian: {count} screenshots purgés (Rétention: {retention_days:.2f}j).")
+                logger.info(
+                    f"🧹 VisionGuardian: {count} screenshots purgés (Rétention: {retention_days:.2f}j)."
+                )
         except Exception as e:
             logger.warning(f"⚠️ Erreur nettoyage screenshots: {e}")
 
@@ -323,29 +389,32 @@ class VisionGuardian:
 
     def _generate_error_fingerprint(self, context: str, error_msg: str) -> str:
         raw = f"{context}|{error_msg}"
-        return hashlib.md5(raw.encode('utf-8')).hexdigest()
+        return hashlib.md5(raw.encode("utf-8")).hexdigest()
 
     async def check_freeze(self, page, context: str) -> bool:
         """Méthode publique pour vérifier le freeze depuis l'extérieur."""
         is_frozen = await self.stasis_detector.is_frozen(page)
         if is_frozen:
-            logger.warning(f"❄️ FREEZE DETECTED ({context}): L'écran est statique depuis trop longtemps.")
+            logger.warning(
+                f"❄️ FREEZE DETECTED ({context}): L'écran est statique depuis trop longtemps."
+            )
             # On prend un screenshot de "preuve" mais on ne crash pas forcément
             await self.handle_crash(page, context, "VISUAL_STASIS_DETECTED")
         return is_frozen
 
     async def handle_crash(self, page, context: str = "Unknown", error_msg: str = ""):
-        if self._is_closing: return
+        if self._is_closing:
+            return
 
         now = time.time()
         error_hash = self._generate_error_fingerprint(context, error_msg)
         last_occurrence = self.error_history.get(error_hash, 0)
-        
+
         if now - last_occurrence < self.deduplication_window:
             return
-        
+
         self.error_history[error_hash] = now
-        
+
         if len(self.error_history) > 1000:
             self.error_history.clear()
 
@@ -363,7 +432,7 @@ class VisionGuardian:
                     else:
                         return
                 except Exception:
-                    return 
+                    return
             else:
                 return
 
@@ -389,12 +458,12 @@ class VisionGuardian:
         file_ref = None
         try:
             file_ref = await asyncio.to_thread(genai.upload_file, path=image_path)
-            
-            if hasattr(self.model, 'generate_content_async'):
+
+            if hasattr(self.model, "generate_content_async"):
                 response = await self.model.generate_content_async([prompt, file_ref])
             else:
                 response = await asyncio.to_thread(self.model.generate_content, [prompt, file_ref])
-            
+
             return response.text
         except Exception as e:
             logger.error(f"Echec analyse Vision: {e}")
@@ -403,17 +472,21 @@ class VisionGuardian:
             if file_ref:
                 try:
                     await asyncio.to_thread(genai.delete_file, file_ref.name)
-                except Exception: pass
+                except Exception:
+                    pass
 
-    async def _send_telegram_alert(self, image_path: Path, context: str, error: str, diagnosis: str):
+    async def _send_telegram_alert(
+        self, image_path: Path, context: str, error: str, diagnosis: str
+    ):
         try:
             token = settings.TELEGRAM_BOT_TOKEN
-            if hasattr(token, 'get_secret_value'):
+            if hasattr(token, "get_secret_value"):
                 token = token.get_secret_value()
-            
+
             chat_id = settings.TELEGRAM_CHAT_ID
-            if not token or not chat_id: return
-            
+            if not token or not chat_id:
+                return
+
             safe_error = html.escape(str(error))[:300]
             safe_diag = html.escape(str(diagnosis))[:500]
 
@@ -423,24 +496,24 @@ class VisionGuardian:
                 f"⚠️ <b>Erreur:</b> {safe_error}...\n\n"
                 f"👁️ <b>Vision IA:</b>\n{safe_diag}"
             )
-            
+
             if self.privacy_mode:
-                 caption += "\n\n🔒 <i>Screenshot non envoyé (Privacy Mode).</i>"
+                caption += "\n\n🔒 <i>Screenshot non envoyé (Privacy Mode).</i>"
 
             data = aiohttp.FormData()
-            data.add_field('chat_id', str(chat_id))
-            data.add_field('parse_mode', 'HTML')
-            
+            data.add_field("chat_id", str(chat_id))
+            data.add_field("parse_mode", "HTML")
+
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
                 if not self.privacy_mode:
                     url = f"https://api.telegram.org/bot{token}/sendPhoto"
-                    data.add_field('caption', caption)
+                    data.add_field("caption", caption)
                     async with aiofiles.open(image_path, "rb") as f:
                         img_content = await f.read()
-                    data.add_field('photo', img_content, filename=image_path.name)
+                    data.add_field("photo", img_content, filename=image_path.name)
                 else:
                     url = f"https://api.telegram.org/bot{token}/sendMessage"
-                    data.add_field('text', caption)
+                    data.add_field("text", caption)
 
                 async with session.post(url, data=data) as resp:
                     if resp.status != 200:

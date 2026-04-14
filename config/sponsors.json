@@ -110,5 +110,27 @@
       "allowed_geos": ["GLOBAL"],
       "conversion_trigger": "sale"
     }
+  },
+  "yield_tiers": {
+    "TIER_1_HIGH_YIELD_PROP": {
+      "protocols": ["APEX", "TOPSTEP", "FTMO", "EVALUATION"],
+      "base_payout": 150.0,
+      "description": "High Ticket Global CPA / Prop Firms"
+    },
+    "TIER_2_INFRA_SECURITY": {
+      "protocols": ["LEDGER", "MERIA", "TREZOR"],
+      "base_payout": 60.0,
+      "description": "Crypto Infrastructure & Security"
+    },
+    "TIER_3_SAAS_TOOLS": {
+      "protocols": ["TRADINGVIEW", "REALVISION", "VPN"],
+      "base_payout": 30.0,
+      "description": "SaaS / Charting / Data Tools"
+    },
+    "TIER_4_LEGACY_CRYPTO": {
+      "protocols": ["BINANCE", "BYBIT", "OKX"],
+      "base_payout": 40.0,
+      "description": "Standard Crypto Exchanges"
+    }
   }
 }

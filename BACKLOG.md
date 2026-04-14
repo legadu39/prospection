@@ -39,10 +39,10 @@
 
 | ID | Statut | Tâche | Taille | Fichier(s) | Détail |
 |----|--------|-------|--------|------------|--------|
-| P2-1 | ⬜ | Implémenter la lecture `dom_knowledge` dans `vision_guardian.py` | **M** | `core/vision_guardian.py:139-142` | `pass + TODO` — le SELECT sur la table `dom_knowledge` n'est pas implémenté. VisionGuardian repart de zéro à chaque redémarrage, sans capitaliser sur les sélecteurs DOM qui ont fonctionné. |
-| P2-2 | ⬜ | Implémenter la sauvegarde sélecteur dans `vision_guardian.py` | **S** | `core/vision_guardian.py:179-181` | `pass` — les sélecteurs DOM découverts dynamiquement ne sont pas persistés en DB. Symétriquement critique avec P2-1. |
-| P2-3 | ⬜ | Compléter la stratégie 3 de `mobile_rotator.py` | **S** | `core/mobile_rotator.py:199-200` | `pass` explicite + commentaire "input tap à implémenter via coordonnées". Bloquant si la rotation IP 4G par ADB doit utiliser la stratégie tap direct. |
-| P2-4 | ⬜ | Fiabiliser la détection de succès dans `reddit/sender.py` | **S** | `channels/reddit/sender.py:508-510` | `if not input.is_visible() or input_value() == ""` est fragile : faux positifs si Reddit rafraîchit la page. Implémenter un listener sur la réponse réseau (HTTP 200 de l'API commentaire) pour une confirmation fiable. |
+| P2-1 | ✅ | Implémenter la lecture `dom_knowledge` dans `vision_guardian.py` | **M** | `core/vision_guardian.py:139-142` | `pass + TODO` — le SELECT sur la table `dom_knowledge` n'est pas implémenté. VisionGuardian repart de zéro à chaque redémarrage, sans capitaliser sur les sélecteurs DOM qui ont fonctionné. |
+| P2-2 | ✅ | Implémenter la sauvegarde sélecteur dans `vision_guardian.py` | **S** | `core/vision_guardian.py:179-181` | `pass` — les sélecteurs DOM découverts dynamiquement ne sont pas persistés en DB. Symétriquement critique avec P2-1. |
+| P2-3 | ✅ | Compléter la stratégie 3 de `mobile_rotator.py` | **S** | `core/mobile_rotator.py:199-200` | `pass` explicite + commentaire "input tap à implémenter via coordonnées". Bloquant si la rotation IP 4G par ADB doit utiliser la stratégie tap direct. |
+| P2-4 | ✅ | Fiabiliser la détection de succès dans `reddit/sender.py` | **S** | `channels/reddit/sender.py:508-510` | `if not input.is_visible() or input_value() == ""` est fragile : faux positifs si Reddit rafraîchit la page. Implémenter un listener sur la réponse réseau (HTTP 200 de l'API commentaire) pour une confirmation fiable. |
 
 ---
 
@@ -52,15 +52,15 @@
 
 | ID | Statut | Tâche | Taille | Fichier(s) | Détail |
 |----|--------|-------|--------|------------|--------|
-| P3-1 | ⬜ | Ajouter `__init__.py` à tous les packages | **S** | `core/`, `channels/`, `channels/tiktok/`, `channels/reddit/`, `channels/email/`, `config/` | Absents. Rend les imports relatifs fragiles selon l'environnement Python. |
-| P3-2 | ⬜ | Endpoint `/health` dans `ad_exchange_server.py` | **S** | `core/ad_exchange_server.py` | Manquant pour healthcheck Docker/K8s. Retourner `{"status":"ok","db":"connected","sponsors_loaded":N}`. |
+| P3-1 | ✅ | Ajouter `__init__.py` à tous les packages | **S** | `core/`, `channels/`, `channels/tiktok/`, `channels/reddit/`, `channels/email/`, `config/` | Absents. Rend les imports relatifs fragiles selon l'environnement Python. |
+| P3-2 | ✅ | Endpoint `/health` dans `ad_exchange_server.py` | **S** | `core/ad_exchange_server.py` | Manquant pour healthcheck Docker/K8s. Retourner `{"status":"ok","db":"connected","sponsors_loaded":N}`. |
 | P3-3 | ⬜ | Tests unitaires `workload_orchestrator.py` | **M** | `core/workload_orchestrator.py` | Logique UCB1, scarcity curve, PID, fuzzy matching — code financier critique sans couverture. Tester `infer_process_type()`, `_calculate_ucb1_score()`, `attempt_atomic_allocation()`. |
 | P3-4 | ⬜ | Tests unitaires `secure_telemetry_store.py` (NexusDB) | **L** | `core/secure_telemetry_store.py` | Couche DB critique sans aucun test. Utiliser SQLite `:memory:`. |
-| P3-5 | ⬜ | Externaliser `PARTNER_YIELD_TIERS` vers `config/sponsors.json` | **S** | `core/workload_orchestrator.py:75-101` | Tiers de payout hardcodés (APEX=150€, LEDGER=60€…). Doit vivre dans `sponsors.json` pour être ajustable sans redéploiement. |
-| P3-6 | ⬜ | Gérer `asyncio.CancelledError` dans `pipeline_bridge.py` | **S** | `pipeline_bridge.py:run_pipeline()` | Boucle principale ne catch pas `CancelledError` → shutdown brutal sans cleanup DB. |
+| P3-5 | ✅ | Externaliser `PARTNER_YIELD_TIERS` vers `config/sponsors.json` | **S** | `core/workload_orchestrator.py:75-101` | Tiers de payout hardcodés (APEX=150€, LEDGER=60€…). Doit vivre dans `sponsors.json` pour être ajustable sans redéploiement. |
+| P3-6 | ✅ | Gérer `asyncio.CancelledError` dans `pipeline_bridge.py` | **S** | `pipeline_bridge.py:run_pipeline()` | Boucle principale ne catch pas `CancelledError` → shutdown brutal sans cleanup DB. |
 | P3-7 | ⬜ | Stratégie de rotation du `PRIVACY_SALT` | **M** | `core/secure_telemetry_store.py:69` | Sel de hachage RGPD statique. Prévoir rotation + migration des hashes si compromis. |
-| P3-8 | ⬜ | Normaliser `time.time()` vs `datetime.utcnow()` | **S** | Plusieurs fichiers | Mix des deux conventions pour horodater les leads. Utiliser `time.time()` (epoch float) partout en DB. |
-| P3-9 | ⬜ | Externaliser le timeout Brevo dans `settings` | **S** | `channels/email/mailer_client.py:142` | `timeout=10` hardcodé dans `requests.post`. Déplacer vers `settings.BREVO_TIMEOUT`. |
+| P3-8 | ✅ | Normaliser `time.time()` vs `datetime.utcnow()` | **S** | Plusieurs fichiers | Mix des deux conventions pour horodater les leads. Utiliser `time.time()` (epoch float) partout en DB. |
+| P3-9 | ✅ | Externaliser le timeout Brevo dans `settings` | **S** | `channels/email/mailer_client.py:142` | `timeout=10` hardcodé dans `requests.post`. Déplacer vers `settings.BREVO_TIMEOUT`. |
 | P3-10 | ⬜ | Documenter le schéma DB (tables et colonnes) | **M** | `core/secure_telemetry_store.py` | Aucune doc SQL du schéma. Tables `leads`, `sponsors`, `campaigns`, `dom_knowledge` etc. à documenter pour faciliter les migrations. |
 
 ---
@@ -71,9 +71,9 @@
 |----------|--------|---------|----------------|----------|
 | **P0** | 4 | 4 | ~0h | Le projet démarre |
 | **P1** | 5 | 5 | ~0h | Features core fonctionnelles ✅ |
-| **P2** | 4 | 0 | ~4h | Comportement correct en prod |
-| **P3** | 10 | 0 | ~15h | Dette technique et robustesse |
-| **Total** | **23** | **2** | **~28h** | |
+| **P2** | 4 | 4 | ~0h | Comportement correct en prod ✅ |
+| **P3** | 10 | 5 | ~10h | Dette technique et robustesse |
+| **Total** | **23** | **18** | **~10h** | |
 
 ---
 

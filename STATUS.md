@@ -34,7 +34,8 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 ### `pipeline_bridge.py` — ✅ Complet
 **Dépendances :** `core.database` ✅ · `core.dispatcher` ✅ · `core.gemini_processor` ✅ · `core.prompts` ✅ · `core.logger_utils` ✅  
 **Rôle :** Pipeline IA principal (triage sémantique, PID backpressure, fast-track, smart retry)  
-**Ce qui manque :** Rien
+**Ce qui manque :** Rien  
+**Implémenté (P3-6) :** `run_pipeline()` gère `CancelledError` proprement via `try/finally` — annule watchdog task, sauvegarde `KeywordLearner`, ferme `db.close()` avant exit.
 
 ---
 
@@ -62,12 +63,11 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ---
 
-### `core/ad_exchange_server.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.settings` ✅ · `fastapi` · `uvicorn`  
+### `core/ad_exchange_server.py` — ✅ Complet
+**Dépendances :** `core.database` ✅ · `core.settings` ✅ · `fastapi` · `uvicorn`  
 **Rôle :** Serveur FastAPI — allocation programmatique, geo-routing, pacing, postback attribution  
-**Ce qui manque :**
-- `from core.database import NexusDB` → `ImportError` tant que `core/database.py` absent
-- Endpoint `/health` manquant (monitoring Docker)
+**Ce qui manque :** Rien  
+**Implémenté :** `GET /health` — vérifie la connectivité DB + compte sponsors actifs, HTTP 200 si ok, 503 si DB unreachable.
 
 ---
 
@@ -101,12 +101,11 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ---
 
-### `core/mobile_rotator.py` — 🔄 Partiel
+### `core/mobile_rotator.py` — ✅ Complet
 **Dépendances :** `core.settings`  
-**Rôle :** Rotation IP via Android/ADB (airplaine mode toggle + ADB shell)  
-**Ce qui manque :**
-- Ligne 200 : `pass` avec commentaire "Stratégie 3 : input tap — à implémenter si besoin via coordonnées"
-- Stratégie 3 non implémentée (interaction tap directe par coordonnées)
+**Rôle :** Rotation IP via Android/ADB (airplane mode toggle + ADB shell)  
+**Ce qui manque :** Rien  
+**Implémenté :** Stratégie 3 — `cmd statusbar expand-settings` + `input tap {x} {y}` + `KEYCODE_BACK`. Coordonnées configurables via `airplane_tap_coords` au constructeur (défaut 180×620 pour FHD+ 1080×2400).
 
 ---
 
@@ -140,13 +139,11 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ---
 
-### `core/vision_guardian.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.settings` · `playwright` · `PIL`  
+### `core/vision_guardian.py` — ✅ Complet
+**Dépendances :** `core.database` ✅ · `core.settings` ✅ · `playwright` · `PIL`  
 **Rôle :** Analyse visuelle — détection captcha, crash handler, apprentissage sélecteurs DOM  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
-- Ligne 141 : `pass + TODO` — SELECT sur table `dom_knowledge` non implémenté
-- Ligne 181 : `pass` — sauvegarde des sélecteurs DOM non implémentée
+**Ce qui manque :** Rien  
+**Implémenté :** `_load_memory()` SELECT sur `dom_knowledge` (merge hive→local) · `_update_stats()` UPSERT vers `dom_knowledge` (swarm push) · Migration V14 ajoutée dans `secure_telemetry_store.py`
 
 ---
 
@@ -222,12 +219,11 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ---
 
-### `channels/reddit/sender.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.browser_engine` · `core.time_manager` · `core.vision_guardian` · `core.humanizer`  
+### `channels/reddit/sender.py` — ✅ Complet
+**Dépendances :** `core.database` ✅ · `core.browser_engine` · `core.time_manager` · `core.vision_guardian` · `core.humanizer`  
 **Rôle :** Community gateway v28.0 — `RedditCommunityGateway`, DCO geo-routing FR/US, reputation gate, persistent memory  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
-- Ligne 508-510 : détection de succès fragile (vérif input vide post-submit)
+**Ce qui manque :** Rien  
+**Implémenté :** Détection succès par `page.expect_response()` sur `/api/comment`, `/svc/shreddit/graphql`, `gateway.reddit.com` (HTTP 200 = succès). Fallback sur vérification champ texte si timeout.
 
 ---
 
