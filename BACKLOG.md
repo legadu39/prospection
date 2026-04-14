@@ -56,11 +56,11 @@
 | P3-2 | ⬜ | Endpoint `/health` dans `ad_exchange_server.py` | **S** | `core/ad_exchange_server.py` | Manquant pour healthcheck Docker/K8s. Retourner `{"status":"ok","db":"connected","sponsors_loaded":N}`. |
 | P3-3 | ⬜ | Tests unitaires `workload_orchestrator.py` | **M** | `core/workload_orchestrator.py` | Logique UCB1, scarcity curve, PID, fuzzy matching — code financier critique sans couverture. Tester `infer_process_type()`, `_calculate_ucb1_score()`, `attempt_atomic_allocation()`. |
 | P3-4 | ⬜ | Tests unitaires `secure_telemetry_store.py` (NexusDB) | **L** | `core/secure_telemetry_store.py` | Couche DB critique sans aucun test. Utiliser SQLite `:memory:`. |
-| P3-5 | ⬜ | Externaliser `PARTNER_YIELD_TIERS` vers `config/sponsors.json` | **S** | `core/workload_orchestrator.py:75-101` | Tiers de payout hardcodés (APEX=150€, LEDGER=60€…). Doit vivre dans `sponsors.json` pour être ajustable sans redéploiement. |
+| P3-5 | ✅ | Externaliser `PARTNER_YIELD_TIERS` vers `config/sponsors.json` | **S** | `core/workload_orchestrator.py:75-101` | Tiers de payout hardcodés (APEX=150€, LEDGER=60€…). Doit vivre dans `sponsors.json` pour être ajustable sans redéploiement. |
 | P3-6 | ⬜ | Gérer `asyncio.CancelledError` dans `pipeline_bridge.py` | **S** | `pipeline_bridge.py:run_pipeline()` | Boucle principale ne catch pas `CancelledError` → shutdown brutal sans cleanup DB. |
 | P3-7 | ⬜ | Stratégie de rotation du `PRIVACY_SALT` | **M** | `core/secure_telemetry_store.py:69` | Sel de hachage RGPD statique. Prévoir rotation + migration des hashes si compromis. |
 | P3-8 | ⬜ | Normaliser `time.time()` vs `datetime.utcnow()` | **S** | Plusieurs fichiers | Mix des deux conventions pour horodater les leads. Utiliser `time.time()` (epoch float) partout en DB. |
-| P3-9 | ⬜ | Externaliser le timeout Brevo dans `settings` | **S** | `channels/email/mailer_client.py:142` | `timeout=10` hardcodé dans `requests.post`. Déplacer vers `settings.BREVO_TIMEOUT`. |
+| P3-9 | ✅ | Externaliser le timeout Brevo dans `settings` | **S** | `channels/email/mailer_client.py:142` | `timeout=10` hardcodé dans `requests.post`. Déplacer vers `settings.BREVO_TIMEOUT`. |
 | P3-10 | ⬜ | Documenter le schéma DB (tables et colonnes) | **M** | `core/secure_telemetry_store.py` | Aucune doc SQL du schéma. Tables `leads`, `sponsors`, `campaigns`, `dom_knowledge` etc. à documenter pour faciliter les migrations. |
 
 ---
@@ -72,7 +72,7 @@
 | **P0** | 4 | 4 | ~0h | Le projet démarre |
 | **P1** | 5 | 5 | ~0h | Features core fonctionnelles ✅ |
 | **P2** | 4 | 0 | ~4h | Comportement correct en prod |
-| **P3** | 10 | 0 | ~15h | Dette technique et robustesse |
+| **P3** | 10 | 2 | ~13h | Dette technique et robustesse |
 | **Total** | **23** | **2** | **~28h** | |
 
 ---
