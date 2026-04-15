@@ -88,6 +88,8 @@ Channels (acquisition)
 - Toujours `from core.database import NexusDB` — jamais `from core.secure_telemetry_store import NexusDB` directement
 - `core/database.py` est l'alias officiel (1 ligne) vers `secure_telemetry_store`
 
+Ne jamais créer de worktree Git (.claude/worktrees). Travailler toujours directement dans C:\Users\Mathieu\Desktop\prospection
+
 **Privacy / RGPD :**
 - Tout identifiant utilisateur (username, email, author_id) doit être **haché immédiatement** via `db._hash_identity(raw_id)` avant tout stockage ou log
 - Ne jamais stocker de PII en clair dans la DB ni dans les logs
