@@ -62,6 +62,7 @@
 | P3-8 | ✅ | Normaliser `time.time()` vs `datetime.utcnow()` | **S** | Plusieurs fichiers | Mix des deux conventions pour horodater les leads. Utiliser `time.time()` (epoch float) partout en DB. |
 | P3-9 | ✅ | Externaliser le timeout Brevo dans `settings` | **S** | `channels/email/mailer_client.py:142` | `timeout=10` hardcodé dans `requests.post`. Déplacer vers `settings.BREVO_TIMEOUT`. |
 | P3-10 | ✅ | Documenter le schéma DB (tables et colonnes) | **M** | `core/secure_telemetry_store.py` | `docs/SCHEMA.md` généré le 2026-04-15 — 12 tables (V1–V14), colonnes/types/contraintes/index/relations + 4 bugs documentés. |
+| P3-11 | ⬜ | Corriger import direct dans `conftest.py` | **S** | `tests/conftest.py:28` | Importe `core.secure_telemetry_store` directement au lieu de `core.database` — violation convention P1-3. Non bloquant. |
 
 ---
 
@@ -72,8 +73,8 @@
 | **P0** | 4 | 4 | ~0h | Le projet démarre |
 | **P1** | 5 | 5 | ~0h | Features core fonctionnelles ✅ |
 | **P2** | 4 | 4 | ~0h | Comportement correct en prod ✅ |
-| **P3** | 10 | 10 | ~0h | Dette technique et robustesse ✅ |
-| **Total** | **23** | **23** | **~0h** | |
+| **P3** | 11 | 10 | ~0.25h | Dette technique et robustesse |
+| **Total** | **24** | **23** | **~0.25h** | |
 
 ---
 
