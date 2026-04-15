@@ -11,6 +11,7 @@ NEXUS SECURE TELEMETRY STORE V35.2.0 - SIGNAL PERSISTENCE LAYER
 5. Intelligent Workflow: Automated State Machine for "Double-Dip" Strategy.
 """
 
+import os
 import sqlite3
 import time
 import json
@@ -66,12 +67,19 @@ class NexusDB:
     _thread_local = threading.local()
     CURRENT_SCHEMA_VERSION = 14
 
-    # Hashing Salt (Rotated via Environment Variable in Prod)
-    PRIVACY_SALT = (
-        settings.PRIVACY_SALT
-        if hasattr(settings, "PRIVACY_SALT")
-        else "NEXUS_GDPR_COMPLIANCE_V1_SALT"
-    )
+    # Hashing Salt — loaded at class definition time.
+    # Override in production: PRIVACY_SALT=<random-hex-32> in the environment.
+    # Rotating this value re-hashes all existing identities — plan a migration.
+    _PRIVACY_SALT_DEFAULT = "NEXUS_GDPR_COMPLIANCE_V1_SALT"
+    _privacy_salt_env = os.environ.get("PRIVACY_SALT", "").strip()
+    if _privacy_salt_env:
+        PRIVACY_SALT = _privacy_salt_env
+    else:
+        logging.getLogger("NexusDB").warning(
+            "[PRIVACY] PRIVACY_SALT env var not set — using built-in default. "
+            "Set PRIVACY_SALT=<random-hex-32> in production to harden GDPR hashing."
+        )
+        PRIVACY_SALT = _PRIVACY_SALT_DEFAULT
 
     # Correction Heuristics (Signal Normalization)
     COMMON_TYPOS = {
