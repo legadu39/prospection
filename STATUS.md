@@ -268,6 +268,12 @@ core/secure_telemetry_store.py ← contient NexusDB (la vraie DB)
 
 ---
 
+## Documentation schéma DB (P3-10 — 2026-04-15)
+
+**Livrable :** `docs/SCHEMA.md` — 12 tables documentées (migrations V1–V14), colonnes/types/contraintes/relations/index + 4 bugs connus.
+
+---
+
 ## Corrections appliquées (2026-04-13)
 
 | Fichier | Ligne | Bug corrigé |
