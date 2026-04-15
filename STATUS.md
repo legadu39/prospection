@@ -268,6 +268,32 @@ core/secure_telemetry_store.py ← contient NexusDB (la vraie DB)
 
 ---
 
+## Tests NexusDB (P3-4 — 2026-04-15)
+
+**Résultats :** 154 tests · 0 failed · **coverage 83%** sur `core/secure_telemetry_store.py`
+
+| Fichier de test | Tests | Rôle |
+|----------------|-------|------|
+| `tests/unit/test_nexusdb_smoke.py` | 15 | Smoke tests originaux |
+| `tests/unit/test_nexusdb_full.py` | 139 | Tests complets (méthodes, branches, exceptions) |
+
+**Bugs découverts (non corrigés, à documenter) :**
+
+| Bug | Localisation | Symptôme |
+|-----|-------------|----------|
+| Nested session rollback | `fail_lead` → `release_lead_hold` (L.1594), `register_conversion_event` → `confirm_lead_hold` (L.839) | Le `BEGIN IMMEDIATE` imbriqué échoue, `conn.rollback()` annule la transaction outer silencieusement → statut lead jamais mis à jour |
+| `"col" in sqlite3.Row` vérifie les valeurs | `register_conversion_event` L.807-810 | `"assigned_program" in row` teste si la STRING est une VALEUR du row (pas une clé) → `current_program` reste toujours 'UNKNOWN' → double-dip logic (L.871-915) jamais exécuté |
+| Colonne `program` absente de `leads` | `register_conversion_event` L.792, `analyze_user_history` L.1073, `get_dashboard_snapshot` L.1913 | SELECT explicit sur `program` dans `leads` mais la colonne n'est pas créée par les migrations |
+| `PRAGMA wal_checkpoint(PASSIVE)` dans une transaction | `_init_nexus_migrations` L.366 | Échoue avec "database table is locked" → ligne 367 (`PRAGMA optimize`) jamais atteinte |
+
+**Lignes structurellement non couvrables (SQLite :memory:) :**
+- L.33-47, 96, 106, 112-199 — init PostgreSQL pool
+- L.275-335 — `_seed_initial_data` : `sponsors.json` est un dict, pas une liste → loop jamais exécutée
+- L.872-899 — double-dip body (bloqué par bug ci-dessus)
+- L.1276-1278, 1571-1574 — chemins PostgreSQL exclusifs
+
+---
+
 ## Corrections appliquées (2026-04-13)
 
 | Fichier | Ligne | Bug corrigé |
