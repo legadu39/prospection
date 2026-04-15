@@ -58,7 +58,7 @@
 | P3-4 | ✅ | Tests unitaires `secure_telemetry_store.py` (NexusDB) | **L** | `core/secure_telemetry_store.py` | 154 tests (smoke + full) — coverage 83% sur `secure_telemetry_store.py`. SQLite `:memory:` only. Bugs découverts : (1) `fail_lead`/`release_lead_hold` → nested session rollback silencieux, (2) `register_conversion_event` → même bug + `"col" in sqlite3.Row` vérifie les valeurs pas les clés (double-dip inaccessible), (3) colonne `program` absente de `leads` (ajout manuel en fixture). |
 | P3-5 | ✅ | Externaliser `PARTNER_YIELD_TIERS` vers `config/sponsors.json` | **S** | `core/workload_orchestrator.py:75-101` | Tiers de payout hardcodés (APEX=150€, LEDGER=60€…). Doit vivre dans `sponsors.json` pour être ajustable sans redéploiement. |
 | P3-6 | ✅ | Gérer `asyncio.CancelledError` dans `pipeline_bridge.py` | **S** | `pipeline_bridge.py:run_pipeline()` | Boucle principale ne catch pas `CancelledError` → shutdown brutal sans cleanup DB. |
-| P3-7 | ⬜ | Stratégie de rotation du `PRIVACY_SALT` | **M** | `core/secure_telemetry_store.py:69` | Sel de hachage RGPD statique. Prévoir rotation + migration des hashes si compromis. |
+| P3-7 | ✅ | Stratégie de rotation du `PRIVACY_SALT` | **M** | `core/secure_telemetry_store.py:69` | Sel de hachage RGPD statique. Prévoir rotation + migration des hashes si compromis. |
 | P3-8 | ✅ | Normaliser `time.time()` vs `datetime.utcnow()` | **S** | Plusieurs fichiers | Mix des deux conventions pour horodater les leads. Utiliser `time.time()` (epoch float) partout en DB. |
 | P3-9 | ✅ | Externaliser le timeout Brevo dans `settings` | **S** | `channels/email/mailer_client.py:142` | `timeout=10` hardcodé dans `requests.post`. Déplacer vers `settings.BREVO_TIMEOUT`. |
 | P3-10 | ⬜ | Documenter le schéma DB (tables et colonnes) | **M** | `core/secure_telemetry_store.py` | Aucune doc SQL du schéma. Tables `leads`, `sponsors`, `campaigns`, `dom_knowledge` etc. à documenter pour faciliter les migrations. |
@@ -72,8 +72,8 @@
 | **P0** | 4 | 4 | ~0h | Le projet démarre |
 | **P1** | 5 | 5 | ~0h | Features core fonctionnelles ✅ |
 | **P2** | 4 | 4 | ~0h | Comportement correct en prod ✅ |
-| **P3** | 10 | 8 | ~5h | Dette technique et robustesse |
-| **Total** | **23** | **21** | **~5h** | |
+| **P3** | 10 | 9 | ~2h | Dette technique et robustesse |
+| **Total** | **23** | **22** | **~2h** | |
 
 ---
 
