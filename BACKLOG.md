@@ -61,7 +61,7 @@
 | P3-7 | ✅ | Stratégie de rotation du `PRIVACY_SALT` | **M** | `core/secure_telemetry_store.py:69` | Sel de hachage RGPD statique. Prévoir rotation + migration des hashes si compromis. |
 | P3-8 | ✅ | Normaliser `time.time()` vs `datetime.utcnow()` | **S** | Plusieurs fichiers | Mix des deux conventions pour horodater les leads. Utiliser `time.time()` (epoch float) partout en DB. |
 | P3-9 | ✅ | Externaliser le timeout Brevo dans `settings` | **S** | `channels/email/mailer_client.py:142` | `timeout=10` hardcodé dans `requests.post`. Déplacer vers `settings.BREVO_TIMEOUT`. |
-| P3-10 | ⬜ | Documenter le schéma DB (tables et colonnes) | **M** | `core/secure_telemetry_store.py` | Aucune doc SQL du schéma. Tables `leads`, `sponsors`, `campaigns`, `dom_knowledge` etc. à documenter pour faciliter les migrations. |
+| P3-10 | ✅ | Documenter le schéma DB (tables et colonnes) | **M** | `core/secure_telemetry_store.py` | `docs/SCHEMA.md` généré le 2026-04-15 — 12 tables (V1–V14), colonnes/types/contraintes/index/relations + 4 bugs documentés. |
 
 ---
 
@@ -72,8 +72,8 @@
 | **P0** | 4 | 4 | ~0h | Le projet démarre |
 | **P1** | 5 | 5 | ~0h | Features core fonctionnelles ✅ |
 | **P2** | 4 | 4 | ~0h | Comportement correct en prod ✅ |
-| **P3** | 10 | 9 | ~2h | Dette technique et robustesse |
-| **Total** | **23** | **22** | **~2h** | |
+| **P3** | 10 | 10 | ~0h | Dette technique et robustesse ✅ |
+| **Total** | **23** | **23** | **~0h** | |
 
 ---
 
