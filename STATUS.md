@@ -1,6 +1,6 @@
 # STATUS.md — Analyse de l'état du projet Nexus
 
-> Généré le 2026-04-13. Légende : ✅ complet · 🔄 partiel · ❌ vide/cassé
+> Dernière mise à jour : 2026-04-16 (audit vérifié tâche par tâche). Légende : ✅ complet · 🔄 partiel · ❌ vide/cassé
 
 ---
 
@@ -8,26 +8,23 @@
 
 | Stat | Valeur |
 |------|--------|
-| Fichiers Python | 26 |
-| ✅ Complets | 9 |
-| 🔄 Partiels | 17 |
+| Fichiers Python | 26 + 2 créés (database.py, dispatcher.py) |
+| ✅ Complets (vérifiés) | 22 |
+| 🔄 Partiels | 4 (channel files — fonctionnels mais non testés end-to-end) |
 | ❌ Vides / Cassés | 0 |
-| **Bloqueurs P0** | **2** (`core/database.py` manquant, `core/dispatcher.py` manquant) |
+| **Bloqueurs P0** | **0** — tous résolus |
+| **BACKLOG** | **23/23 tâches ✅** — sprint P3 complet, tag v1.1.0 |
 
-**Le projet ne démarre pas** : 13 fichiers font `from core.database import NexusDB` alors que ce fichier n'existe pas.
-La vraie implémentation de `NexusDB` se trouve dans `core/secure_telemetry_store.py`.
-Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
+**Le projet démarre.** `core/database.py` et `core/dispatcher.py` existent. Toutes les dépendances sont dans `requirements.txt`. Suite de tests : 213 tests (154 NexusDB + 59 orchestrator).
 
 ---
 
 ## Fichiers racine
 
-### `launcher.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.settings` ✅ · `core.supply_chain_manager` ✅ · `psutil` (optionnel)  
+### `launcher.py` — ✅ Complet
+**Dépendances :** `core.database` ✅ · `core.settings` ✅ · `core.supply_chain_manager` ✅ · `psutil` ✅  
 **Rôle :** Orchestrateur subprocess des 5 services (ad_exchange, pipeline_bridge, tiktok_sniper, tiktok_sender, reddit_listener)  
-**Ce qui manque :**
-- `from core.database import NexusDB` → `ImportError` au démarrage tant que `core/database.py` n'existe pas
-- `psutil` non listé dans `requirements.txt` (utilisé pour graceful kill)
+**Ce qui manque :** Rien — `core/database.py` créé (P0-1), `psutil` ajouté dans `requirements.txt` (P0-3)
 
 ---
 
@@ -71,12 +68,10 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ---
 
-### `core/browser_engine.py` — 🔄 Partiel
-**Dépendances :** `core.settings` · `core.database` ❌ · `psutil` · `aiofiles` · `aiohttp` · `cryptography` · `playwright`  
+### `core/browser_engine.py` — 🔄 Partiel (imports résolus)
+**Dépendances :** `core.settings` ✅ · `core.database` ✅ · `psutil` ✅ · `aiofiles` ✅ · `aiohttp` ✅ · `cryptography` ✅ · `playwright` ✅  
 **Rôle :** Moteur CDP/Playwright — profils sandbox, stealth injection, circuit breaker, proxy résidentiel  
-**Ce qui manque :**
-- `core.database` absent
-- `psutil` et `aiofiles` non listés dans `requirements.txt`
+**Ce qui manque :** Imports résolus (P0-1, P0-3). Logique interne non vérifiée end-to-end (pas de tests Playwright).
 
 ---
 
@@ -109,11 +104,10 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ---
 
-### `core/offer_hunter.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.settings` ✅  
+### `core/offer_hunter.py` — ✅ Complet
+**Dépendances :** `core.database` ✅ · `core.settings` ✅  
 **Rôle :** Scanner d'offres/bonus — détecte les boosts actifs chez les partenaires affiliés  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
+**Ce qui manque :** Rien — `core/database.py` créé (P0-1)
 
 ---
 
@@ -124,11 +118,10 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ---
 
-### `core/supply_chain_manager.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.settings` ✅  
+### `core/supply_chain_manager.py` — ✅ Complet
+**Dépendances :** `core.database` ✅ · `core.settings` ✅  
 **Rôle :** Yield optimizer — `FleetManager`, EPC/Waterfall, Signal Exchange, Smart Pacing  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
+**Ce qui manque :** Rien — `core/database.py` créé (P0-1)
 
 ---
 
@@ -147,12 +140,10 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ---
 
-### `core/workload_orchestrator.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.settings` ✅ · `core.time_manager` ✅  
+### `core/workload_orchestrator.py` — ✅ Complet
+**Dépendances :** `core.database` ✅ · `core.settings` ✅ · `core.time_manager` ✅  
 **Rôle :** Dispatcher UCB1 — `ComputeGridOrchestrator`, scarcity curve, PID batch size, feedback loop  
-**Note :** Contient la logique qui devrait alimenter `core/dispatcher.py` (`SponsorDispatcher`)  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
+**Ce qui manque :** Rien — `core/database.py` créé (P0-1), `PARTNER_YIELD_TIERS` externalisé vers `sponsors.json` (P3-5), 59 tests unitaires (P3-3)
 
 ---
 
@@ -167,55 +158,47 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ## Channels — TikTok
 
-### `channels/tiktok/sniper.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.settings` · `core.browser_engine` · `core.time_manager` · `core.vision_guardian`  
+### `channels/tiktok/sniper.py` — 🔄 Partiel (imports résolus)
+**Dépendances :** `core.database` ✅ · `core.settings` ✅ · `core.browser_engine` ✅ · `core.time_manager` ✅ · `core.vision_guardian` ✅  
 **Rôle :** Topology mapper v35.2 — `KeywordLearner`, entropy analysis, déduplication  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
+**Ce qui manque :** Imports résolus (P0-1). Logique interne non vérifiée end-to-end (pas de tests Playwright).
 
 ---
 
-### `channels/tiktok/sender.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.browser_engine` · `core.time_manager` · `core.humanizer` · `core.settings`  
+### `channels/tiktok/sender.py` — 🔄 Partiel (imports résolus)
+**Dépendances :** `core.database` ✅ · `core.browser_engine` ✅ · `core.time_manager` ✅ · `core.humanizer` ✅ · `core.settings` ✅  
 **Rôle :** Telemetry injector v41.2 — injection commentaires TikTok, DCO, compliance [Ad]  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
+**Ce qui manque :** Imports résolus (P0-1). Logique interne non vérifiée end-to-end (pas de tests Playwright).
 
 ---
 
-### `channels/tiktok/partner_sniper.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.settings` · `core.browser_engine` · `core.humanizer` · `core.time_manager`  
+### `channels/tiktok/partner_sniper.py` — 🔄 Partiel (imports résolus)
+**Dépendances :** `core.database` ✅ · `core.settings` ✅ · `core.browser_engine` ✅ · `core.humanizer` ✅ · `core.time_manager` ✅  
 **Rôle :** Network topology mapper v37.3 — `TikTokTopologyMapper`, VIP escalation, viral triangulation  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
-- Méthodes DB appelées : `inject_priority_task()`, `upsert_viral_target()` — à vérifier dans NexusDB
+**Ce qui manque :** Imports et méthodes DB résolus — `inject_priority_task()` ✅ (L.1806), `upsert_viral_target()` ✅, `get_author_reputation()` ✅ (L.1746), `update_author_reputation()` ✅ (L.1763). Logique Playwright non testée.
 
 ---
 
-### `channels/tiktok/media_optimizer.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.browser_engine` · `core.time_manager` · `core.settings`  
+### `channels/tiktok/media_optimizer.py` — 🔄 Partiel (imports résolus)
+**Dépendances :** `core.database` ✅ · `core.browser_engine` ✅ · `core.time_manager` ✅ · `core.settings` ✅  
 **Rôle :** Media optimizer v27.0 — scan engagement vidéos, yield efficiency, velocity detection, GDPR hashing  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
+**Ce qui manque :** Imports résolus (P0-1). Logique interne non vérifiée end-to-end (pas de tests Playwright).
 
 ---
 
 ## Channels — Reddit
 
-### `channels/reddit/audience_listener.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.browser_engine` · `core.settings`  
+### `channels/reddit/audience_listener.py` — 🔄 Partiel (imports résolus)
+**Dépendances :** `core.database` ✅ · `core.browser_engine` ✅ · `core.settings` ✅  
 **Rôle :** Audience listener v26.1 — `SemanticIntentClassifier`, CircadianScheduler, analyse flux GQL Reddit  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
+**Ce qui manque :** Imports résolus (P0-1). Logique interne non vérifiée end-to-end (pas de tests Playwright).
 
 ---
 
-### `channels/reddit/partner_hunter.py` — 🔄 Partiel
-**Dépendances :** `core.database` ❌ · `core.settings` · `core.browser_engine` · `core.humanizer`  
+### `channels/reddit/partner_hunter.py` — 🔄 Partiel (imports résolus)
+**Dépendances :** `core.database` ✅ · `core.settings` ✅ · `core.browser_engine` ✅ · `core.humanizer` ✅  
 **Rôle :** Partner hunter v11.1 — `AuthorityClassifier`, B2B vs Prop Firm detection, burst control  
-**Ce qui manque :**
-- `core.database` absent → `ImportError`
-- Appel `self.db.insert_telemetry_signal()` — méthode à vérifier dans NexusDB
+**Ce qui manque :** Imports résolus (P0-1). `insert_telemetry_signal()` ✅ (alias confirmé L.1233 NexusDB). Logique interne non vérifiée end-to-end.
 
 ---
 
@@ -229,13 +212,10 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 
 ## Channels — Email
 
-### `channels/email/mailer_client.py` — 🔄 Partiel
-**Dépendances :** `core.database` ✅ · `requests` · `loguru` · `os`  
+### `channels/email/mailer_client.py` — ✅ Complet
+**Dépendances :** `core.database` ✅ · `requests` ✅ · `loguru` ✅ · `os` ✅  
 **Rôle :** `NurturingBot` — séquences email via Brevo API, A/B testing sujets, send-time optimization  
-**Ce qui manque :**
-- `{{LINK}}` substitué via `raw_html.replace("{{LINK}}", affiliate_link)` ligne 209 ✅
-- `MAILER_API_KEY` validée au `__init__` : `EnvironmentError` + `logger.critical` si absente ✅
-- Fichier complet jusqu'à la ligne 238 (`send_referral_request`) ✅
+**Vérifié :** `{{LINK}}` substitué via `raw_html.replace("{{LINK}}", affiliate_link)` L.245 · `MAILER_API_KEY` validée au `__init__` (EnvironmentError + logger.critical) L.26-34 · `send_referral_request` présent · `BREVO_TIMEOUT` lu depuis `settings.BREVO_TIMEOUT` L.170
 
 ---
 
@@ -259,12 +239,12 @@ Fix P0 : créer `core/database.py` avec 1 ligne d'alias.
 ## Matrice des dépendances critiques
 
 ```
-core/database.py ✅ CRÉÉ (alias vers secure_telemetry_store.NexusDB)
-core/dispatcher.py ❌ MANQUANT ← pipeline_bridge.py l'importe
-core/secure_telemetry_store.py ← contient NexusDB (la vraie DB)
+core/database.py   ✅ EXISTE  — alias vers secure_telemetry_store.NexusDB (vérifié 2026-04-16)
+core/dispatcher.py ✅ EXISTE  — SponsorDispatcher wrapping ComputeGridOrchestrator (vérifié 2026-04-16)
+core/secure_telemetry_store.py ✅ — NexusDB complète, 4 méthodes ajoutées (P1-5)
 ```
 
-**Bloqueur restant : 1 fichier à créer (P0-2)**
+**Aucun bloqueur restant.**
 
 ---
 

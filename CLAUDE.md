@@ -106,7 +106,7 @@ Ne jamais créer de worktree Git (.claude/worktrees). Travailler toujours direct
 
 **Configuration :**
 - Tous les chemins, ports, clés, flags passent par `settings` — jamais de valeurs hardcodées
-- Exception tolérée : les tiers de payout dans `workload_orchestrator.py` (P3-5 BACKLOG)
+- `PARTNER_YIELD_TIERS` est chargé depuis `config/sponsors.json["yield_tiers"]` (P3-5 ✅)
 
 **Imports robustes :**
 - Pattern standard pour les modules avec chemin relatif incertain :
@@ -130,7 +130,7 @@ Ne jamais créer de worktree Git (.claude/worktrees). Travailler toujours direct
 
 ## Règle des tests
 
-**Il n'y a pas encore de suite de tests dans ce projet.** Quand tu en crées :
+**213 tests existent** (`tests/unit/`) — NexusDB (154) + workload_orchestrator (59). Règles à respecter :
 
 - Tester `NexusDB` avec SQLite **en mémoire uniquement** : `NexusDB(db_path=Path(":memory:"))`
 - **Ne jamais mocker NexusDB** — les mocks ont déjà causé des divergences schema/prod par le passé
@@ -154,19 +154,23 @@ Ne jamais créer de worktree Git (.claude/worktrees). Travailler toujours direct
 
 ## État du projet
 
-> Dernière mise à jour : 2026-04-13
+> Dernière mise à jour : 2026-04-16 (audit complet — 23/23 tâches vérifiées dans le code)
 
-**Le projet ne démarre pas** en l'état. Deux fichiers manquants bloquent tout :
+**Le projet démarre.** Tous les bloqueurs P0 sont résolus. BACKLOG 23/23 ✅. Tag v1.1.0 publié.
 
-| Bloqueur | Fichier manquant | Impact | Fix |
-|----------|-----------------|--------|-----|
-| P0-1 | `core/database.py` | 13 fichiers en `ImportError` | 1 ligne : `from core.secure_telemetry_store import NexusDB` |
-| P0-2 | `core/dispatcher.py` | `pipeline_bridge.py` crash ligne 35+62 | Créer `SponsorDispatcher` wrappant `ComputeGridOrchestrator` |
+| Composant | État vérifié |
+|-----------|-------------|
+| `core/database.py` | ✅ Existe — alias correct vers `secure_telemetry_store.NexusDB` |
+| `core/dispatcher.py` | ✅ Existe — `SponsorDispatcher` wrappant `ComputeGridOrchestrator` |
+| `requirements.txt` | ✅ Complet — psutil, aiofiles, pydantic-settings, fastapi, uvicorn présents |
+| NexusDB (4 méthodes) | ✅ `inject_priority_task` · `get_author_reputation` · `update_author_reputation` · `get_sponsor_stats` |
+| Tests | ✅ 213 tests — 154 NexusDB (83% coverage) + 59 workload_orchestrator |
+| `docs/SCHEMA.md` | ✅ 12 tables documentées (migrations V1–V14) |
 
-**Tâches BACKLOG :** 22 tâches — P0×2 · P1×4 · P2×6 · P3×10 — ~31h estimées
+**Fichiers complets (vérifiés) :**
+`check_links.py` · `core/database.py` · `core/dispatcher.py` · `core/gemini_processor.py` · `core/humanizer.py` · `core/logger_utils.py` · `core/offer_hunter.py` · `core/prompts.py` · `core/secure_telemetry_store.py` · `core/settings.py` · `core/supply_chain_manager.py` · `core/time_manager.py` · `core/vision_guardian.py` · `core/workload_orchestrator.py` · `core/ad_exchange_server.py` · `core/mobile_rotator.py` · `channels/email/mailer_client.py` · `channels/reddit/sender.py` · `config/rag_engine.py`
 
-**Fichiers complets (aucune modification nécessaire) :**
-`check_links.py` · `core/gemini_processor.py` · `core/humanizer.py` · `core/logger_utils.py` · `core/prompts.py` · `core/secure_telemetry_store.py` · `core/settings.py` · `core/time_manager.py` · `config/rag_engine.py`
+**Fichiers partiels (imports résolus, logique Playwright non testée end-to-end) :**
+`core/browser_engine.py` · `channels/tiktok/sniper.py` · `channels/tiktok/sender.py` · `channels/tiktok/partner_sniper.py` · `channels/tiktok/media_optimizer.py` · `channels/reddit/audience_listener.py` · `channels/reddit/partner_hunter.py`
 
-**Prochaine action recommandée :** Implémenter P0-1 (20 min) puis P0-2 (2h) pour débloquer le démarrage.
-Voir `BACKLOG.md` pour l'ordre d'exécution complet.
+**Anomalie résiduelle :** `tests/conftest.py:28` importe `core.secure_telemetry_store` directement (violation convention P1-3 — non bloquant, tests seulement).

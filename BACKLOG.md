@@ -1,6 +1,6 @@
 # BACKLOG.md — Matrice de priorité
 
-> Dernière mise à jour : 2026-04-13  
+> Dernière mise à jour : 2026-04-16 (audit complet — toutes tâches vérifiées dans le code)  
 > Taille : **S** = <1h · **M** = 1-4h · **L** = >4h  
 > Statut : ⬜ à faire · 🔄 en cours · ✅ fait
 
@@ -77,35 +77,43 @@
 
 ---
 
-## Ordre d'exécution recommandé
+## Historique des sprints
 
 ```
-Sprint 1 — Démarrage (P0, ~5h)
-  P0-1  core/database.py          ✅ FAIT
-  P0-4  audit méthodes NexusDB    ✅ FAIT (4 méthodes manquantes → P1-5)
-  P0-3  requirements.txt          10 min   ← PROCHAINE TÂCHE
-  P0-2  core/dispatcher.py        2h       ← après P0-3
+Sprint 1 — Démarrage (P0)  ✅ COMPLET
+  P0-1  core/database.py          ✅ vérifié : alias correct vers secure_telemetry_store
+  P0-2  core/dispatcher.py        ✅ vérifié : SponsorDispatcher wrapping ComputeGridOrchestrator
+  P0-3  requirements.txt          ✅ vérifié : psutil, aiofiles, pydantic-settings, fastapi, uvicorn présents
+  P0-4  audit méthodes NexusDB    ✅ vérifié : 4 méthodes implantées (L.1746, 1763, 1806, 1848)
 
-Sprint 2 — Core features (P1, ~4h)
-  P1-3  normaliser imports         30 min
-  P1-4  valider MAILER_API_KEY     30 min
-  P1-2  compléter mailer_client    1h
-  P1-1  résoudre {LINK} email      1h
+Sprint 2 — Core features (P1)  ✅ COMPLET
+  P1-1  résoudre {LINK} email      ✅ vérifié : raw_html.replace("{{LINK}}", affiliate_link) L.245
+  P1-2  compléter mailer_client    ✅ vérifié : send_referral_request + méthodes complètes
+  P1-3  normaliser imports         ✅ vérifié (⚠️ violation résiduelle : tests/conftest.py:28 importe core.secure_telemetry_store directement)
+  P1-4  valider MAILER_API_KEY     ✅ vérifié : EnvironmentError + logger.critical au __init__
+  P1-5  4 méthodes NexusDB         ✅ vérifié : inject_priority_task, get_author_reputation, update_author_reputation, get_sponsor_stats
 
-Sprint 3 — Bugs prod (P2, ~4h)
-  P2-1 + P2-2  vision_guardian     2h  (faire les deux ensemble)
-  P2-3  mobile_rotator             1h
-  P2-4  reddit success detection   1h
+Sprint 3 — Bugs prod (P2)  ✅ COMPLET
+  P2-1  vision_guardian read       ✅ vérifié : SELECT dom_knowledge L.145
+  P2-2  vision_guardian write      ✅ vérifié : INSERT OR REPLACE dom_knowledge L.213
+  P2-3  mobile_rotator strat 3     ✅ vérifié : cmd statusbar + input tap + KEYCODE_BACK
+  P2-4  reddit success detection   ✅ vérifié : page.expect_response /api/comment + /svc/shreddit/graphql
 
-Sprint 4 — Polish (P3, selon dispo)
-  P3-1  __init__.py                5 min
-  P3-2  /health endpoint           30 min
-  P3-6  CancelledError             30 min
-  P3-5  externaliser YIELD_TIERS   1h
-  P3-8  normaliser timestamps      1h
-  P3-3  tests workload_orch        2-3h
-  P3-4  tests NexusDB              4-6h
-  P3-7  PRIVACY_SALT rotation      2-3h
-  P3-9  timeout Brevo              15 min
-  P3-10 doc schéma DB              2h
+Sprint 4 — Polish (P3)  ✅ COMPLET
+  P3-1  __init__.py                ✅ vérifié : 6 fichiers présents
+  P3-2  /health endpoint           ✅ vérifié : L.583-601 ad_exchange_server.py
+  P3-3  tests workload_orch        ✅ vérifié : 59 tests, 399 lignes
+  P3-4  tests NexusDB              ✅ vérifié : 154 tests (smoke 15 + full 139), coverage 83%
+  P3-5  externaliser YIELD_TIERS   ✅ vérifié : _load_yield_tiers() lit sponsors.json["yield_tiers"]
+  P3-6  CancelledError             ✅ vérifié : L.158, 583, 590, 598 pipeline_bridge.py
+  P3-7  PRIVACY_SALT rotation      ✅ vérifié : os.environ.get("PRIVACY_SALT") + warning si absent
+  P3-8  normaliser timestamps      ✅ vérifié : datetime.utcnow() absent de core/DB, seulement .hour calculs
+  P3-9  timeout Brevo              ✅ vérifié : settings.BREVO_TIMEOUT L.73 settings.py, L.170 mailer
+  P3-10 doc schéma DB              ✅ vérifié : docs/SCHEMA.md 320 lignes, 12 tables V1-V14
 ```
+
+## Anomalie détectée lors de l'audit (2026-04-16)
+
+| Anomalie | Localisation | Impact | Statut |
+|----------|-------------|--------|--------|
+| Import convention violée | `tests/conftest.py:28` — `from core.secure_telemetry_store import NexusDB` | Tests seulement, pas de prod | Non bloquant — à corriger opportunément |
