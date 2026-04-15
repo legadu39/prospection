@@ -21,16 +21,17 @@ os.environ.setdefault("SECURITY_MASTER_KEY", "test-master-key-not-for-production
 os.environ.setdefault("POSTGRES_PASSWORD", "test")
 os.environ.setdefault("USE_POSTGRES", "False")
 
-import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+import pytest  # noqa: E402
+import pytest_asyncio  # noqa: E402
+from httpx import AsyncClient, ASGITransport  # noqa: E402
 
-from core.secure_telemetry_store import NexusDB
+from core.database import NexusDB  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
 # Fixture : base de données SQLite en mémoire, schéma initialisé, isolée
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def db():
@@ -47,6 +48,7 @@ def db():
 # ---------------------------------------------------------------------------
 # Fixture : AsyncClient httpx branché sur l'application FastAPI + DB isolée
 # ---------------------------------------------------------------------------
+
 
 @pytest_asyncio.fixture()
 async def client(db):

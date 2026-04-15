@@ -173,4 +173,4 @@ Ne jamais créer de worktree Git (.claude/worktrees). Travailler toujours direct
 **Fichiers partiels (imports résolus, logique Playwright non testée end-to-end) :**
 `core/browser_engine.py` · `channels/tiktok/sniper.py` · `channels/tiktok/sender.py` · `channels/tiktok/partner_sniper.py` · `channels/tiktok/media_optimizer.py` · `channels/reddit/audience_listener.py` · `channels/reddit/partner_hunter.py`
 
-**Anomalie résiduelle :** `tests/conftest.py:28` importe `core.secure_telemetry_store` directement (violation convention P1-3 — non bloquant, tests seulement).
+**Anomalie résiduelle :** aucune — toutes les tâches du BACKLOG sont résolues (24/24 ✅).
