@@ -25,7 +25,7 @@ from core.database import NexusDB
 from core.settings import settings
 
 app = FastAPI(title="Nexus Ad Exchange", version="3.3.0")
-db = NexusDB()
+db = NexusDB(auto_migrate=True)
 logger = logging.getLogger("AdExchange")
 
 # --- SECURITY CONFIGURATION ---

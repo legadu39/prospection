@@ -3,16 +3,14 @@
 Smoke tests NexusDB — valident que la fixture db fonctionne
 et que les méthodes de base sont appelables sans crash.
 """
-import sys
 import os
 
 os.environ.setdefault("SECURITY_MASTER_KEY", "test-master-key-not-for-production")
 os.environ.setdefault("USE_POSTGRES", "False")
 
-import time
-from pathlib import Path
-import pytest
-from core.secure_telemetry_store import NexusDB
+from pathlib import Path  # noqa: E402
+import pytest  # noqa: E402
+from core.database import NexusDB  # noqa: E402
 
 
 @pytest.fixture()
@@ -25,6 +23,7 @@ def db():
 # ---------------------------------------------------------------------------
 # Hash identity
 # ---------------------------------------------------------------------------
+
 
 def test_hash_identity_is_deterministic(db):
     h1 = db._hash_identity("user123")
@@ -48,6 +47,7 @@ def test_hash_identity_already_hashed(db):
 # ---------------------------------------------------------------------------
 # insert_raw_lead / insert_telemetry_signal
 # ---------------------------------------------------------------------------
+
 
 def test_insert_raw_lead_returns_true(db):
     lead = {
@@ -75,6 +75,7 @@ def test_insert_telemetry_signal_is_alias(db):
 # ---------------------------------------------------------------------------
 # get_author_reputation / update_author_reputation
 # ---------------------------------------------------------------------------
+
 
 def test_get_author_reputation_default(db):
     rep = db.get_author_reputation("nonexistent_hash", "tiktok")
@@ -111,6 +112,7 @@ def test_update_author_reputation_clamped_at_100(db):
 # inject_priority_task
 # ---------------------------------------------------------------------------
 
+
 def test_inject_priority_task_no_exception(db):
     task = {
         "type": "VIP_OUTREACH_SEQUENCE",
@@ -128,6 +130,7 @@ def test_inject_priority_task_no_exception(db):
 # get_sponsor_stats
 # ---------------------------------------------------------------------------
 
+
 def test_get_sponsor_stats_unknown_id(db):
     stats = db.get_sponsor_stats("unknown_sponsor")
     assert stats["verified_count_month"] == 0
@@ -138,11 +141,14 @@ def test_get_sponsor_stats_unknown_id(db):
 # get_backlog_count
 # ---------------------------------------------------------------------------
 
+
 def test_get_backlog_count_empty(db):
     assert db.get_backlog_count() == 0
 
 
 def test_get_backlog_count_after_insert(db):
-    db.insert_raw_lead({"id": "bl_001", "source": "reddit", "author": "dave", "url": "", "text": "backlog"})
+    db.insert_raw_lead(
+        {"id": "bl_001", "source": "reddit", "author": "dave", "url": "", "text": "backlog"}
+    )
     # Un lead NEW est compté dans le backlog
     assert db.get_backlog_count() >= 1

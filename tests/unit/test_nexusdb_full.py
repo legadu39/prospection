@@ -24,7 +24,7 @@ os.environ.setdefault("USE_POSTGRES", "False")
 
 import pytest  # noqa: E402
 
-from core.secure_telemetry_store import NexusDB  # noqa: E402
+from core.database import NexusDB  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
