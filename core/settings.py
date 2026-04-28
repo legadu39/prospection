@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     # CHROME_BIN peut être None initialement, l'auto-repair s'en chargera
     CHROME_BIN: Optional[str] = os.getenv("CHROME_BIN")
     CHROME_PROFILES_DIR: Path = BASE_DIR / "chrome_profiles"
+    # Chemin vers le User Data réel de Chrome (contient les vrais profils)
+    # Si défini, SandboxCDPProfile lance Chrome sur ce profil plutôt que le profil sandbox
+    CHROME_USER_DATA_DIR: Optional[str] = None
+    # Sous-dossier du profil à utiliser (ex: "Profile 3" pour Mathieu, "Default" pour profil 1)
+    CHROME_PROFILE_DIRECTORY: str = "Default"
     ACCOUNTS_IMPORT_DIR: Path = BASE_DIR / "import"
     LOCKS_DIR: Path = BASE_DIR / "locks"
 
