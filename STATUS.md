@@ -1,6 +1,6 @@
 # STATUS.md — Analyse de l'état du projet Nexus
 
-> Dernière mise à jour : 2026-05-06 (4 bugs NexusDB corrigés + migration V15 + 88 tests TikTok + 65 tests Reddit). Légende : ✅ complet · 🔄 partiel · ❌ vide/cassé
+> Dernière mise à jour : 2026-05-06 (4 bugs NexusDB corrigés + migration V15 + 88 tests TikTok + 65 tests Reddit + nettoyage artefacts pré-lancement). Légende : ✅ complet · 🔄 partiel · ❌ vide/cassé
 
 ---
 
@@ -233,6 +233,7 @@
 | `config/competitors_list.json` | ✅ | Filtre concurrents |
 | `requirements.txt` | 🔄 | Manque `psutil`, `aiofiles` |
 | `.env` | ✅ | Variables sensibles (non versionné) |
+| `.gitignore` | ✅ | `config/node_metrics.json` ajouté |
 | `Dockerfile` | ✅ | Docker-ready |
 | `frontend/` | ✅ | React/Vite — indépendant |
 
@@ -291,3 +292,13 @@ core/secure_telemetry_store.py ✅ — NexusDB complète, 4 méthodes ajoutées 
 | `core/settings.py` | 281 | Ajout `extra = "ignore"` (champs `.env` supplémentaires rejetés) |
 | `core/settings.py` | 224-262 | Emojis retirés des `print()` du validator `CHROME_BIN` (UnicodeEncodeError Windows) |
 | `core/settings.py` | 288 | `print(f"🔴 ...")` → `print(..., file=sys.stderr)` sans emoji |
+
+---
+
+## Nettoyage artefacts pré-lancement (2026-05-06)
+
+| Action | Fichier(s) | Statut |
+|--------|------------|--------|
+| Suppression fichiers debug | `debug_chrome_cmd.py`, `dry_run_tiktok.py`, `test_chrome_launch.py` | ✅ |
+| Ajout `.gitignore` | `config/node_metrics.json` (métriques générées dynamiquement) | ✅ |
+| Retrait cache Git | Non requis — fichier jamais traqué | ✅ |

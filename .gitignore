@@ -27,6 +27,9 @@ data/
 # Claude interne
 .claude/
 
+# Métriques générées dynamiquement
+config/node_metrics.json
+
 # Node (frontend)
 node_modules/
 frontend/dist/

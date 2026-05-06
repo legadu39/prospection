@@ -156,9 +156,9 @@ Ne jamais créer de worktree Git (.claude/worktrees). Travailler toujours direct
 
 ## État du projet
 
-> Dernière mise à jour : 2026-05-06 (4 bugs NexusDB corrigés + migration V15 + 88 tests intégration TikTok + 65 tests intégration Reddit)
+> Dernière mise à jour : 2026-05-06 (4 bugs NexusDB corrigés + migration V15 + 88 tests intégration TikTok + 65 tests intégration Reddit + nettoyage artefacts pré-lancement)
 
-**Le projet démarre.** Tous les bloqueurs P0 sont résolus. BACKLOG 26/26 ✅. Tag v1.1.0 publié.
+**Le projet démarre.** Tous les bloqueurs P0 sont résolus. BACKLOG 27/27 ✅. Tag v1.2.0 prêt.
 
 | Composant | État vérifié |
 |-----------|-------------|
@@ -169,6 +169,7 @@ Ne jamais créer de worktree Git (.claude/worktrees). Travailler toujours direct
 | Tests | ✅ 371 tests — 158 NexusDB (85% coverage) + 59 workload_orchestrator + 15 smoke + 88 TikTok integration + 65 Reddit integration |
 | `docs/SCHEMA.md` | ✅ 12 tables documentées (migrations V1–V15) |
 | **Bugs corrigés** | ✅ Nested rollback (`_conn`), `row.keys()`, colonne `program` V15, `PRAGMA wal_checkpoint` hors transaction |
+| **Nettoyage** | ✅ Debug files supprimés, `config/node_metrics.json` gitignored, repo propre |
 
 **Fichiers complets (vérifiés) :**
 `check_links.py` · `core/database.py` · `core/dispatcher.py` · `core/gemini_processor.py` · `core/humanizer.py` · `core/logger_utils.py` · `core/offer_hunter.py` · `core/prompts.py` · `core/secure_telemetry_store.py` · `core/settings.py` · `core/supply_chain_manager.py` · `core/time_manager.py` · `core/vision_guardian.py` · `core/workload_orchestrator.py` · `core/ad_exchange_server.py` · `core/mobile_rotator.py` · `channels/email/mailer_client.py` · `channels/reddit/sender.py` · `channels/tiktok/sniper.py` · `channels/tiktok/sender.py` · `channels/tiktok/partner_sniper.py` · `channels/tiktok/media_optimizer.py` · `channels/reddit/audience_listener.py` · `channels/reddit/partner_hunter.py` · `config/rag_engine.py`
@@ -176,4 +177,4 @@ Ne jamais créer de worktree Git (.claude/worktrees). Travailler toujours direct
 **Fichiers partiels (imports résolus, logique Playwright non testée end-to-end) :**
 `core/browser_engine.py`
 
-**Anomalie résiduelle :** aucune — toutes les tâches du BACKLOG sont résolues (26/26 ✅).
+**Anomalie résiduelle :** aucune — toutes les tâches du BACKLOG sont résolues (27/27 ✅).

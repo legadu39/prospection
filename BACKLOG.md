@@ -63,6 +63,7 @@
 | P3-11 | ✅ | Corriger import direct dans `conftest.py` | **S** | `tests/conftest.py:28` | Importe `core.secure_telemetry_store` directement au lieu de `core.database` — violation convention P1-3. Non bloquant. |
 | P3-12 | ✅ | Tests d'intégration TikTok (4 modules) | **L** | `tests/integration/test_tiktok_bots.py` | 88 tests couvrant `sniper.py` (ProtocolEngine, TrafficShaper, SmartTopologyManager, AsyncNodeDeduplicator), `partner_sniper.py` (TikTokTopologyMapper signal analysis), `media_optimizer.py` (MediaAssetMetrics, utilitaires), `sender.py` (TelemetryInjector language/payloads/momentum). Flux DB complet NEW → QUALIFIED → DISPATCHING → SENT/FAILED. Tests DOM Playwright (commentaires, liens vidéos, contenteditable, erreurs HTTP 404/500, timeout, isolation test_profile). Stubs pour `PhysicsHumanizer` et `StealthInjector` (classes manquantes dans core). |
 | P3-13 | ✅ | Tests d'intégration Reddit (2 modules) | **M** | `tests/integration/test_reddit_bots.py` | 65 tests couvrant `audience_listener.py` (SemanticIntentClassifier, CircadianScheduler, RedditStreamListener GQL parsing/dedup/filtrage), `partner_hunter.py` (AuthorityClassifier B2B/Prop Firm/SAAS/NOISE, PartnerHunter anonymisation SHA-256, cache, target selection). Flux DB complet NEW → QUALIFIED → DISPATCHING. Tests DOM Playwright Reddit (posts, commentaires, sidebar, scroll, parsing JSON GQL, erreurs HTTP, timeout, isolation test_profile). Stub pour `PhysicsHumanizer` (classe manquante). |
+| P3-14 | ✅ | Nettoyage artefacts pré-lancement | **S** | `.gitignore`, fichiers debug | Suppression `debug_chrome_cmd.py`, `dry_run_tiktok.py`, `test_chrome_launch.py`. Ajout `config/node_metrics.json` au `.gitignore`. Repo propre avant tag v1.2.0. |
 
 ---
 
@@ -73,8 +74,8 @@
 | **P0** | 4 | 4 | ~0h | Le projet démarre |
 | **P1** | 5 | 5 | ~0h | Features core fonctionnelles ✅ |
 | **P2** | 4 | 4 | ~0h | Comportement correct en prod ✅ |
-| **P3** | 13 | 13 | ~0h | Dette technique, robustesse, tests TikTok et Reddit |
-| **Total** | **26** | **26** | **~0h** | |
+| **P3** | 14 | 14 | ~0h | Dette technique, robustesse, tests TikTok/Reddit, nettoyage |
+| **Total** | **27** | **27** | **~0h** | |
 
 ---
 
@@ -126,6 +127,10 @@ Sprint 6 — Tests Reddit (P3-13)  ✅ COMPLET
   filtering, health check), AuthorityClassifier (B2B_PARTNER, PROP_FIRM_LEAD, SAAS_CRYPTO_LEAD, NOISE),
   PartnerHunter (anonymisation SHA-256, cache, target selection), flux DB complet,
   DOM Playwright Reddit (posts, commentaires, sidebar, scroll, JSON GQL parsing, erreurs HTTP, timeout).
+
+Sprint 7 — Nettoyage pré-lancement (P3-14)  ✅ COMPLET
+  P3-14 nettoyage artefacts         ✅ vérifié : debug files supprimés, node_metrics.json gitignored
+  Repo propre, prêt pour tag v1.2.0.
 ```
 
 ## Anomalie détectée lors de l'audit (2026-04-16)
