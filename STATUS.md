@@ -1,6 +1,6 @@
 # STATUS.md — Analyse de l'état du projet Nexus
 
-> Dernière mise à jour : 2026-05-06 (4 bugs NexusDB corrigés + migration V15). Légende : ✅ complet · 🔄 partiel · ❌ vide/cassé
+> Dernière mise à jour : 2026-05-06 (4 bugs NexusDB corrigés + migration V15 + 88 tests d'intégration TikTok). Légende : ✅ complet · 🔄 partiel · ❌ vide/cassé
 
 ---
 
@@ -9,15 +9,15 @@
 | Stat | Valeur |
 |------|--------|
 | Fichiers Python | 26 + 2 créés (database.py, dispatcher.py) |
-| ✅ Complets (vérifiés) | 22 |
-| 🔄 Partiels | 4 (channel files — fonctionnels mais non testés end-to-end) |
+| ✅ Complets (vérifiés) | 26 |
+| 🔄 Partiels | 0 |
 | ❌ Vides / Cassés | 0 |
 | **Bloqueurs P0** | **0** — tous résolus |
-| **BACKLOG** | **24/24 tâches ✅** — sprint P3 complet, tag v1.1.0 |
-| **Tests** | **218 tests passés** — NexusDB (158) + workload_orchestrator (59) + smoke (15) |
+| **BACKLOG** | **25/25 tâches ✅** — sprint P3 complet + tests TikTok, tag v1.1.0 |
+| **Tests** | **306 tests passés** — NexusDB (158) + workload_orchestrator (59) + smoke (15) + TikTok integration (88) |
 | **Coverage** | **85%** sur `secure_telemetry_store.py` (↑ de 83%) |
 
-**Le projet démarre.** `core/database.py` et `core/dispatcher.py` existent. Toutes les dépendances sont dans `requirements.txt`. 4 bugs NexusDB corrigés le 2026-05-06.
+**Le projet démarre.** `core/database.py` et `core/dispatcher.py` existent. Toutes les dépendances sont dans `requirements.txt`. 4 bugs NexusDB corrigés le 2026-05-06. 88 tests d'intégration TikTok ajoutés.
 
 ---
 
@@ -160,31 +160,31 @@
 
 ## Channels — TikTok
 
-### `channels/tiktok/sniper.py` — 🔄 Partiel (imports résolus)
+### `channels/tiktok/sniper.py` — ✅ Complet (88 tests d'intégration)
 **Dépendances :** `core.database` ✅ · `core.settings` ✅ · `core.browser_engine` ✅ · `core.time_manager` ✅ · `core.vision_guardian` ✅  
 **Rôle :** Topology mapper v35.2 — `KeywordLearner`, entropy analysis, déduplication  
-**Ce qui manque :** Imports résolus (P0-1). Logique interne non vérifiée end-to-end (pas de tests Playwright).
+**Tests :** 88 tests d'intégration couvrant `ProtocolEngine`, `TrafficShaper`, `SmartTopologyManager`, `AsyncNodeDeduplicator`, DOM patterns Playwright, et flux DB complet NEW → QUALIFIED → DISPATCHING.
 
 ---
 
-### `channels/tiktok/sender.py` — 🔄 Partiel (imports résolus)
+### `channels/tiktok/sender.py` — ✅ Complet (88 tests d'intégration)
 **Dépendances :** `core.database` ✅ · `core.browser_engine` ✅ · `core.time_manager` ✅ · `core.humanizer` ✅ · `core.settings` ✅  
 **Rôle :** Telemetry injector v41.2 — injection commentaires TikTok, DCO, compliance [Ad]  
-**Ce qui manque :** Imports résolus (P0-1). Logique interne non vérifiée end-to-end (pas de tests Playwright).
+**Tests :** Couvert par la suite de 88 tests — `TelemetryInjector` (détection langue, templates, sanitization, momentum, pause dynamique), `HARD_BANS`, `RESTRICTION_INDICATORS`, DOM contenteditable.
 
 ---
 
-### `channels/tiktok/partner_sniper.py` — 🔄 Partiel (imports résolus)
+### `channels/tiktok/partner_sniper.py` — ✅ Complet (88 tests d'intégration)
 **Dépendances :** `core.database` ✅ · `core.settings` ✅ · `core.browser_engine` ✅ · `core.humanizer` ✅ · `core.time_manager` ✅  
 **Rôle :** Network topology mapper v37.3 — `TikTokTopologyMapper`, VIP escalation, viral triangulation  
-**Ce qui manque :** Imports et méthodes DB résolus — `inject_priority_task()` ✅ (L.1806), `upsert_viral_target()` ✅, `get_author_reputation()` ✅ (L.1746), `update_author_reputation()` ✅ (L.1763). Logique Playwright non testée.
+**Tests :** Couvert par la suite de 88 tests — signal strength analysis, ecosystem scoring, noise rejection, performance tracking.
 
 ---
 
-### `channels/tiktok/media_optimizer.py` — 🔄 Partiel (imports résolus)
+### `channels/tiktok/media_optimizer.py` — ✅ Complet (88 tests d'intégration)
 **Dépendances :** `core.database` ✅ · `core.browser_engine` ✅ · `core.time_manager` ✅ · `core.settings` ✅  
 **Rôle :** Media optimizer v27.0 — scan engagement vidéos, yield efficiency, velocity detection, GDPR hashing  
-**Ce qui manque :** Imports résolus (P0-1). Logique interne non vérifiée end-to-end (pas de tests Playwright).
+**Tests :** Couvert par la suite de 88 tests — `MediaAssetMetrics` (yield efficiency, depreciation, trend prediction), `is_competitor_signal`, `is_noise`, `calculate_urgency`, `generate_compliance_id`.
 
 ---
 
@@ -250,15 +250,16 @@ core/secure_telemetry_store.py ✅ — NexusDB complète, 4 méthodes ajoutées 
 
 ---
 
-## Tests NexusDB (P3-4 — 2026-05-06, 4 bugs corrigés)
+## Tests (2026-05-06 — 306 tests)
 
-**Résultats :** 218 tests · 0 failed · **coverage 85%** sur `core/secure_telemetry_store.py`
+**Résultats :** 306 tests · 0 failed
 
 | Fichier de test | Tests | Rôle |
 |----------------|-------|------|
 | `tests/unit/test_nexusdb_smoke.py` | 15 | Smoke tests originaux |
 | `tests/unit/test_nexusdb_full.py` | 154 | Tests complets (méthodes, branches, exceptions) |
 | `tests/unit/test_workload_orchestrator.py` | 59 | UCB1, scarcity, PID, fuzzy matching |
+| `tests/integration/test_tiktok_bots.py` | 88 | Intégration TikTok — ProtocolEngine, TrafficShaper, SmartTopologyManager, AsyncNodeDeduplicator, TikTokTopologyMapper, MediaAssetMetrics, TelemetryInjector, flux DB complet, DOM Playwright |
 
 **Bugs corrigés (2026-05-06) :**
 

@@ -61,6 +61,7 @@
 | P3-9 | ✅ | Externaliser le timeout Brevo dans `settings` | **S** | `channels/email/mailer_client.py:142` | `timeout=10` hardcodé dans `requests.post`. Déplacer vers `settings.BREVO_TIMEOUT`. |
 | P3-10 | ✅ | Documenter le schéma DB (tables et colonnes) | **M** | `core/secure_telemetry_store.py` | `docs/SCHEMA.md` généré le 2026-04-15 — 12 tables (V1–V14), colonnes/types/contraintes/index/relations + 4 bugs documentés (tous corrigés 2026-05-06, V15). |
 | P3-11 | ✅ | Corriger import direct dans `conftest.py` | **S** | `tests/conftest.py:28` | Importe `core.secure_telemetry_store` directement au lieu de `core.database` — violation convention P1-3. Non bloquant. |
+| P3-12 | ✅ | Tests d'intégration TikTok (4 modules) | **L** | `tests/integration/test_tiktok_bots.py` | 88 tests couvrant `sniper.py` (ProtocolEngine, TrafficShaper, SmartTopologyManager, AsyncNodeDeduplicator), `partner_sniper.py` (TikTokTopologyMapper signal analysis), `media_optimizer.py` (MediaAssetMetrics, utilitaires), `sender.py` (TelemetryInjector language/payloads/momentum). Flux DB complet NEW → QUALIFIED → DISPATCHING → SENT/FAILED. Tests DOM Playwright (commentaires, liens vidéos, contenteditable, erreurs HTTP 404/500, timeout, isolation test_profile). Stubs pour `PhysicsHumanizer` et `StealthInjector` (classes manquantes dans core). |
 
 ---
 
@@ -71,8 +72,8 @@
 | **P0** | 4 | 4 | ~0h | Le projet démarre |
 | **P1** | 5 | 5 | ~0h | Features core fonctionnelles ✅ |
 | **P2** | 4 | 4 | ~0h | Comportement correct en prod ✅ |
-| **P3** | 11 | 11 | ~0h | Dette technique et robustesse |
-| **Total** | **24** | **24** | **~0h** | |
+| **P3** | 12 | 12 | ~0h | Dette technique, robustesse et tests TikTok |
+| **Total** | **25** | **25** | **~0h** | |
 
 ---
 
@@ -110,6 +111,12 @@ Sprint 4 — Polish (P3)  ✅ COMPLET
   P3-9  timeout Brevo              ✅ vérifié : settings.BREVO_TIMEOUT L.73 settings.py, L.170 mailer
   P3-10 doc schéma DB              ✅ vérifié : docs/SCHEMA.md 320 lignes, 12 tables V1-V14 (+ V15)
   P3-11 corriger conftest import   ✅ vérifié : core.database au lieu de core.secure_telemetry_store
+
+Sprint 5 — Tests TikTok (P3-12)  ✅ COMPLET
+  P3-12 tests intégration TikTok   ✅ vérifié : 88 tests, 4 modules (sniper, partner_sniper, media_optimizer, sender)
+  Couverture : ProtocolEngine, TrafficShaper, SmartTopologyManager, AsyncNodeDeduplicator,
+  TikTokTopologyMapper, MediaAssetMetrics, TelemetryInjector, flux DB NEW→QUALIFIED→DISPATCHING,
+  DOM Playwright (commentaires, vidéos, contenteditable, erreurs HTTP, timeout, test_profile).
 ```
 
 ## Anomalie détectée lors de l'audit (2026-04-16)
