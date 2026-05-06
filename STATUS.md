@@ -1,6 +1,6 @@
 # STATUS.md — Analyse de l'état du projet Nexus
 
-> Dernière mise à jour : 2026-05-06 (4 bugs NexusDB corrigés + migration V15 + 88 tests d'intégration TikTok). Légende : ✅ complet · 🔄 partiel · ❌ vide/cassé
+> Dernière mise à jour : 2026-05-06 (4 bugs NexusDB corrigés + migration V15 + 88 tests TikTok + 65 tests Reddit). Légende : ✅ complet · 🔄 partiel · ❌ vide/cassé
 
 ---
 
@@ -9,15 +9,15 @@
 | Stat | Valeur |
 |------|--------|
 | Fichiers Python | 26 + 2 créés (database.py, dispatcher.py) |
-| ✅ Complets (vérifiés) | 26 |
+| ✅ Complets (vérifiés) | 28 |
 | 🔄 Partiels | 0 |
 | ❌ Vides / Cassés | 0 |
 | **Bloqueurs P0** | **0** — tous résolus |
-| **BACKLOG** | **25/25 tâches ✅** — sprint P3 complet + tests TikTok, tag v1.1.0 |
-| **Tests** | **306 tests passés** — NexusDB (158) + workload_orchestrator (59) + smoke (15) + TikTok integration (88) |
+| **BACKLOG** | **26/26 tâches ✅** — sprint P3 complet + tests TikTok + tests Reddit, tag v1.1.0 |
+| **Tests** | **371 tests passés** — NexusDB (158) + workload_orchestrator (59) + smoke (15) + TikTok integration (88) + Reddit integration (65) |
 | **Coverage** | **85%** sur `secure_telemetry_store.py` (↑ de 83%) |
 
-**Le projet démarre.** `core/database.py` et `core/dispatcher.py` existent. Toutes les dépendances sont dans `requirements.txt`. 4 bugs NexusDB corrigés le 2026-05-06. 88 tests d'intégration TikTok ajoutés.
+**Le projet démarre.** `core/database.py` et `core/dispatcher.py` existent. Toutes les dépendances sont dans `requirements.txt`. 4 bugs NexusDB corrigés le 2026-05-06. 88 tests d'intégration TikTok + 65 tests Reddit ajoutés.
 
 ---
 
@@ -190,17 +190,17 @@
 
 ## Channels — Reddit
 
-### `channels/reddit/audience_listener.py` — 🔄 Partiel (imports résolus)
+### `channels/reddit/audience_listener.py` — ✅ Complet (65 tests d'intégration)
 **Dépendances :** `core.database` ✅ · `core.browser_engine` ✅ · `core.settings` ✅  
 **Rôle :** Audience listener v26.1 — `SemanticIntentClassifier`, CircadianScheduler, analyse flux GQL Reddit  
-**Ce qui manque :** Imports résolus (P0-1). Logique interne non vérifiée end-to-end (pas de tests Playwright).
+**Tests :** Couvert par la suite de 65 tests — classification d'intention (HIGH_INTENT, COMMERCIAL, INFORMATIONAL, EXCLUSION), scheduling circadien, `RedditStreamListener` (GQL parsing, deduplication, sponsored/automoderator filtering, health check), flux DB complet.
 
 ---
 
-### `channels/reddit/partner_hunter.py` — 🔄 Partiel (imports résolus)
+### `channels/reddit/partner_hunter.py` — ✅ Complet (65 tests d'intégration)
 **Dépendances :** `core.database` ✅ · `core.settings` ✅ · `core.browser_engine` ✅ · `core.humanizer` ✅  
 **Rôle :** Partner hunter v11.1 — `AuthorityClassifier`, B2B vs Prop Firm detection, burst control  
-**Ce qui manque :** Imports résolus (P0-1). `insert_telemetry_signal()` ✅ (alias confirmé L.1233 NexusDB). Logique interne non vérifiée end-to-end.
+**Tests :** Couvert par la suite de 65 tests — `AuthorityClassifier` (B2B_PARTNER, PROP_FIRM_LEAD, SAAS_CRYPTO_LEAD, NOISE banking filter), anonymisation SHA-256, cache maintenance, target selection, flux DB complet NEW → QUALIFIED → DISPATCHING → SENT/FAILED.
 
 ---
 
@@ -250,9 +250,9 @@ core/secure_telemetry_store.py ✅ — NexusDB complète, 4 méthodes ajoutées 
 
 ---
 
-## Tests (2026-05-06 — 306 tests)
+## Tests (2026-05-06 — 371 tests)
 
-**Résultats :** 306 tests · 0 failed
+**Résultats :** 371 tests · 0 failed
 
 | Fichier de test | Tests | Rôle |
 |----------------|-------|------|
@@ -260,6 +260,7 @@ core/secure_telemetry_store.py ✅ — NexusDB complète, 4 méthodes ajoutées 
 | `tests/unit/test_nexusdb_full.py` | 154 | Tests complets (méthodes, branches, exceptions) |
 | `tests/unit/test_workload_orchestrator.py` | 59 | UCB1, scarcity, PID, fuzzy matching |
 | `tests/integration/test_tiktok_bots.py` | 88 | Intégration TikTok — ProtocolEngine, TrafficShaper, SmartTopologyManager, AsyncNodeDeduplicator, TikTokTopologyMapper, MediaAssetMetrics, TelemetryInjector, flux DB complet, DOM Playwright |
+| `tests/integration/test_reddit_bots.py` | 65 | Intégration Reddit — SemanticIntentClassifier, CircadianScheduler, RedditStreamListener (GQL parsing, dedup, filtering), AuthorityClassifier (B2B/Prop Firm/SAAS classification), PartnerHunter (anonymisation, cache), flux DB complet, DOM Playwright Reddit |
 
 **Bugs corrigés (2026-05-06) :**
 

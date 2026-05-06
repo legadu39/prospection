@@ -62,6 +62,7 @@
 | P3-10 | ✅ | Documenter le schéma DB (tables et colonnes) | **M** | `core/secure_telemetry_store.py` | `docs/SCHEMA.md` généré le 2026-04-15 — 12 tables (V1–V14), colonnes/types/contraintes/index/relations + 4 bugs documentés (tous corrigés 2026-05-06, V15). |
 | P3-11 | ✅ | Corriger import direct dans `conftest.py` | **S** | `tests/conftest.py:28` | Importe `core.secure_telemetry_store` directement au lieu de `core.database` — violation convention P1-3. Non bloquant. |
 | P3-12 | ✅ | Tests d'intégration TikTok (4 modules) | **L** | `tests/integration/test_tiktok_bots.py` | 88 tests couvrant `sniper.py` (ProtocolEngine, TrafficShaper, SmartTopologyManager, AsyncNodeDeduplicator), `partner_sniper.py` (TikTokTopologyMapper signal analysis), `media_optimizer.py` (MediaAssetMetrics, utilitaires), `sender.py` (TelemetryInjector language/payloads/momentum). Flux DB complet NEW → QUALIFIED → DISPATCHING → SENT/FAILED. Tests DOM Playwright (commentaires, liens vidéos, contenteditable, erreurs HTTP 404/500, timeout, isolation test_profile). Stubs pour `PhysicsHumanizer` et `StealthInjector` (classes manquantes dans core). |
+| P3-13 | ✅ | Tests d'intégration Reddit (2 modules) | **M** | `tests/integration/test_reddit_bots.py` | 65 tests couvrant `audience_listener.py` (SemanticIntentClassifier, CircadianScheduler, RedditStreamListener GQL parsing/dedup/filtrage), `partner_hunter.py` (AuthorityClassifier B2B/Prop Firm/SAAS/NOISE, PartnerHunter anonymisation SHA-256, cache, target selection). Flux DB complet NEW → QUALIFIED → DISPATCHING. Tests DOM Playwright Reddit (posts, commentaires, sidebar, scroll, parsing JSON GQL, erreurs HTTP, timeout, isolation test_profile). Stub pour `PhysicsHumanizer` (classe manquante). |
 
 ---
 
@@ -72,8 +73,8 @@
 | **P0** | 4 | 4 | ~0h | Le projet démarre |
 | **P1** | 5 | 5 | ~0h | Features core fonctionnelles ✅ |
 | **P2** | 4 | 4 | ~0h | Comportement correct en prod ✅ |
-| **P3** | 12 | 12 | ~0h | Dette technique, robustesse et tests TikTok |
-| **Total** | **25** | **25** | **~0h** | |
+| **P3** | 13 | 13 | ~0h | Dette technique, robustesse, tests TikTok et Reddit |
+| **Total** | **26** | **26** | **~0h** | |
 
 ---
 
@@ -117,6 +118,14 @@ Sprint 5 — Tests TikTok (P3-12)  ✅ COMPLET
   Couverture : ProtocolEngine, TrafficShaper, SmartTopologyManager, AsyncNodeDeduplicator,
   TikTokTopologyMapper, MediaAssetMetrics, TelemetryInjector, flux DB NEW→QUALIFIED→DISPATCHING,
   DOM Playwright (commentaires, vidéos, contenteditable, erreurs HTTP, timeout, test_profile).
+
+Sprint 6 — Tests Reddit (P3-13)  ✅ COMPLET
+  P3-13 tests intégration Reddit   ✅ vérifié : 65 tests, 2 modules (audience_listener, partner_hunter)
+  Couverture : SemanticIntentClassifier (HIGH_INTENT, COMMERCIAL, INFORMATIONAL, EXCLUSION),
+  CircadianScheduler (mocked datetime), RedditStreamListener (GQL parsing, dedup, sponsored/automoderator
+  filtering, health check), AuthorityClassifier (B2B_PARTNER, PROP_FIRM_LEAD, SAAS_CRYPTO_LEAD, NOISE),
+  PartnerHunter (anonymisation SHA-256, cache, target selection), flux DB complet,
+  DOM Playwright Reddit (posts, commentaires, sidebar, scroll, JSON GQL parsing, erreurs HTTP, timeout).
 ```
 
 ## Anomalie détectée lors de l'audit (2026-04-16)
