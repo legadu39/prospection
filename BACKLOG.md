@@ -1,6 +1,6 @@
 # BACKLOG.md — Matrice de priorité
 
-> Dernière mise à jour : 2026-04-16 (audit complet — toutes tâches vérifiées dans le code)  
+> Dernière mise à jour : 2026-05-06 (4 bugs NexusDB corrigés)  
 > Taille : **S** = <1h · **M** = 1-4h · **L** = >4h  
 > Statut : ⬜ à faire · 🔄 en cours · ✅ fait
 
@@ -48,20 +48,18 @@
 
 ## P3 — Nice to have (amélioration, polish, dette technique)
 
-> Critère : aucun impact fonctionnel immédiat.
-
 | ID | Statut | Tâche | Taille | Fichier(s) | Détail |
 |----|--------|-------|--------|------------|--------|
 | P3-1 | ✅ | Ajouter `__init__.py` à tous les packages | **S** | `core/`, `channels/`, `channels/tiktok/`, `channels/reddit/`, `channels/email/`, `config/` | Absents. Rend les imports relatifs fragiles selon l'environnement Python. |
 | P3-2 | ✅ | Endpoint `/health` dans `ad_exchange_server.py` | **S** | `core/ad_exchange_server.py` | Manquant pour healthcheck Docker/K8s. Retourner `{"status":"ok","db":"connected","sponsors_loaded":N}`. |
 | P3-3 | ✅ | Tests unitaires `workload_orchestrator.py` | **M** | `core/workload_orchestrator.py` | 59 tests — UCB1, scarcity curve, PID, fuzzy matching. `infer_process_type()`, `_calculate_ucb1_score()`, `attempt_atomic_allocation()` couverts. |
-| P3-4 | ✅ | Tests unitaires `secure_telemetry_store.py` (NexusDB) | **L** | `core/secure_telemetry_store.py` | 154 tests (smoke + full) — coverage 83% sur `secure_telemetry_store.py`. SQLite `:memory:` only. Bugs découverts : (1) `fail_lead`/`release_lead_hold` → nested session rollback silencieux, (2) `register_conversion_event` → même bug + `"col" in sqlite3.Row` vérifie les valeurs pas les clés (double-dip inaccessible), (3) colonne `program` absente de `leads` (ajout manuel en fixture). |
+| P3-4 | ✅ | Tests unitaires `secure_telemetry_store.py` (NexusDB) | **L** | `core/secure_telemetry_store.py` | 218 tests (smoke 15 + full 154 + 4 nouveaux) — coverage 85% sur `secure_telemetry_store.py`. SQLite `:memory:` only. **Bugs corrigés 2026-05-06 :** (1) nested session rollback dans `fail_lead`/`register_conversion_event` → passage `_conn` pour réutiliser la même transaction, (2) `"col" in row` → `row.keys()` pour tester les clés, (3) colonne `program` ajoutée via migration V15, (4) `PRAGMA wal_checkpoint` déplacé hors transaction. |
 | P3-5 | ✅ | Externaliser `PARTNER_YIELD_TIERS` vers `config/sponsors.json` | **S** | `core/workload_orchestrator.py:75-101` | Tiers de payout hardcodés (APEX=150€, LEDGER=60€…). Doit vivre dans `sponsors.json` pour être ajustable sans redéploiement. |
 | P3-6 | ✅ | Gérer `asyncio.CancelledError` dans `pipeline_bridge.py` | **S** | `pipeline_bridge.py:run_pipeline()` | Boucle principale ne catch pas `CancelledError` → shutdown brutal sans cleanup DB. |
 | P3-7 | ✅ | Stratégie de rotation du `PRIVACY_SALT` | **M** | `core/secure_telemetry_store.py:69` | Sel de hachage RGPD statique. Prévoir rotation + migration des hashes si compromis. |
 | P3-8 | ✅ | Normaliser `time.time()` vs `datetime.utcnow()` | **S** | Plusieurs fichiers | Mix des deux conventions pour horodater les leads. Utiliser `time.time()` (epoch float) partout en DB. |
 | P3-9 | ✅ | Externaliser le timeout Brevo dans `settings` | **S** | `channels/email/mailer_client.py:142` | `timeout=10` hardcodé dans `requests.post`. Déplacer vers `settings.BREVO_TIMEOUT`. |
-| P3-10 | ✅ | Documenter le schéma DB (tables et colonnes) | **M** | `core/secure_telemetry_store.py` | `docs/SCHEMA.md` généré le 2026-04-15 — 12 tables (V1–V14), colonnes/types/contraintes/index/relations + 4 bugs documentés. |
+| P3-10 | ✅ | Documenter le schéma DB (tables et colonnes) | **M** | `core/secure_telemetry_store.py` | `docs/SCHEMA.md` généré le 2026-04-15 — 12 tables (V1–V14), colonnes/types/contraintes/index/relations + 4 bugs documentés (tous corrigés 2026-05-06, V15). |
 | P3-11 | ✅ | Corriger import direct dans `conftest.py` | **S** | `tests/conftest.py:28` | Importe `core.secure_telemetry_store` directement au lieu de `core.database` — violation convention P1-3. Non bloquant. |
 
 ---
@@ -104,13 +102,13 @@ Sprint 4 — Polish (P3)  ✅ COMPLET
   P3-1  __init__.py                ✅ vérifié : 6 fichiers présents
   P3-2  /health endpoint           ✅ vérifié : L.583-601 ad_exchange_server.py
   P3-3  tests workload_orch        ✅ vérifié : 59 tests, 399 lignes
-  P3-4  tests NexusDB              ✅ vérifié : 154 tests (smoke 15 + full 139), coverage 83%
+  P3-4  tests NexusDB              ✅ vérifié : 218 tests, coverage 85%, 4 bugs corrigés (nested rollback, sqlite3.Row keys, program column V15, wal_checkpoint)
   P3-5  externaliser YIELD_TIERS   ✅ vérifié : _load_yield_tiers() lit sponsors.json["yield_tiers"]
   P3-6  CancelledError             ✅ vérifié : L.158, 583, 590, 598 pipeline_bridge.py
   P3-7  PRIVACY_SALT rotation      ✅ vérifié : os.environ.get("PRIVACY_SALT") + warning si absent
   P3-8  normaliser timestamps      ✅ vérifié : datetime.utcnow() absent de core/DB, seulement .hour calculs
   P3-9  timeout Brevo              ✅ vérifié : settings.BREVO_TIMEOUT L.73 settings.py, L.170 mailer
-  P3-10 doc schéma DB              ✅ vérifié : docs/SCHEMA.md 320 lignes, 12 tables V1-V14
+  P3-10 doc schéma DB              ✅ vérifié : docs/SCHEMA.md 320 lignes, 12 tables V1-V14 (+ V15)
   P3-11 corriger conftest import   ✅ vérifié : core.database au lieu de core.secure_telemetry_store
 ```
 

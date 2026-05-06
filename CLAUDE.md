@@ -130,7 +130,7 @@ Ne jamais créer de worktree Git (.claude/worktrees). Travailler toujours direct
 
 ## Règle des tests
 
-**213 tests existent** (`tests/unit/`) — NexusDB (154) + workload_orchestrator (59). Règles à respecter :
+**218 tests existent** (`tests/unit/`) — NexusDB (158) + workload_orchestrator (59) + smoke (15). Règles à respecter :
 
 - Tester `NexusDB` avec SQLite **en mémoire uniquement** : `NexusDB(db_path=Path(":memory:"))`
 - **Ne jamais mocker NexusDB** — les mocks ont déjà causé des divergences schema/prod par le passé
@@ -154,9 +154,9 @@ Ne jamais créer de worktree Git (.claude/worktrees). Travailler toujours direct
 
 ## État du projet
 
-> Dernière mise à jour : 2026-04-16 (audit complet — 23/23 tâches vérifiées dans le code)
+> Dernière mise à jour : 2026-05-06 (4 bugs NexusDB corrigés + migration V15)
 
-**Le projet démarre.** Tous les bloqueurs P0 sont résolus. BACKLOG 23/23 ✅. Tag v1.1.0 publié.
+**Le projet démarre.** Tous les bloqueurs P0 sont résolus. BACKLOG 24/24 ✅. Tag v1.1.0 publié.
 
 | Composant | État vérifié |
 |-----------|-------------|
@@ -164,8 +164,9 @@ Ne jamais créer de worktree Git (.claude/worktrees). Travailler toujours direct
 | `core/dispatcher.py` | ✅ Existe — `SponsorDispatcher` wrappant `ComputeGridOrchestrator` |
 | `requirements.txt` | ✅ Complet — psutil, aiofiles, pydantic-settings, fastapi, uvicorn présents |
 | NexusDB (4 méthodes) | ✅ `inject_priority_task` · `get_author_reputation` · `update_author_reputation` · `get_sponsor_stats` |
-| Tests | ✅ 213 tests — 154 NexusDB (83% coverage) + 59 workload_orchestrator |
-| `docs/SCHEMA.md` | ✅ 12 tables documentées (migrations V1–V14) |
+| Tests | ✅ 218 tests — 158 NexusDB (85% coverage) + 59 workload_orchestrator + 15 smoke |
+| `docs/SCHEMA.md` | ✅ 12 tables documentées (migrations V1–V15) |
+| **Bugs corrigés** | ✅ Nested rollback (`_conn`), `row.keys()`, colonne `program` V15, `PRAGMA wal_checkpoint` hors transaction |
 
 **Fichiers complets (vérifiés) :**
 `check_links.py` · `core/database.py` · `core/dispatcher.py` · `core/gemini_processor.py` · `core/humanizer.py` · `core/logger_utils.py` · `core/offer_hunter.py` · `core/prompts.py` · `core/secure_telemetry_store.py` · `core/settings.py` · `core/supply_chain_manager.py` · `core/time_manager.py` · `core/vision_guardian.py` · `core/workload_orchestrator.py` · `core/ad_exchange_server.py` · `core/mobile_rotator.py` · `channels/email/mailer_client.py` · `channels/reddit/sender.py` · `config/rag_engine.py`

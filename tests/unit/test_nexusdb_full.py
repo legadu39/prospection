@@ -4,14 +4,15 @@ Tests complets NexusDB — couvre les méthodes non testées dans test_nexusdb_s
 Objectif : coverage ≥ 80% sur core/secure_telemetry_store.py.
 Toutes les instances utilisent SQLite :memory: (jamais de mock NexusDB).
 
-Known quirks (documented, not bugs to fix here):
-- fail_lead / release_lead_hold : SQLite "cannot start a transaction within a
-  transaction" → l'UPDATE de statut est rollbacké silencieusement.
-  Tests vérifient uniquement qu'aucune exception ne s'échappe.
-- register_conversion_event appelle confirm_lead_hold internalement (même bug),
-  ce qui fait que confirm_lead_hold retourne False sans erreur visible.
-- _seed_initial_data : sponsors.json est un dict, pas une liste → les lignes
-  298-315 ne sont pas accessibles sans modifier le fichier de config.
+Bugs corrigés (2026-05-06) :
+- fail_lead / release_lead_hold : nested session rollback FIXÉ — le statut
+  FAILED_* est maintenant persisté correctement (passage de _conn).
+- register_conversion_event : nested session FIXÉ (confirm_lead_hold avec _conn)
+  + '"col" in row' corrigé pour tester row.keys() au lieu des valeurs →
+  la logique double-dip s'exécute maintenant correctement.
+- Colonne 'program' : ajoutée via migration V15 dans _apply_migrations.
+- PRAGMA wal_checkpoint(PASSIVE) : déplacé hors transaction pour éviter
+  l'erreur "database table is locked".
 """
 import asyncio
 import os
@@ -35,13 +36,6 @@ from core.database import NexusDB  # noqa: E402
 @pytest.fixture()
 def db():
     instance = NexusDB(db_path=Path(":memory:"), auto_migrate=True)
-    # register_conversion_event & analyze_user_history query `program` column
-    # from leads — that column is not created by any migration, add it here.
-    with instance.session() as conn:
-        try:
-            conn.execute("ALTER TABLE leads ADD COLUMN program TEXT")
-        except Exception:
-            pass  # already exists
     yield instance
     instance.close()
 
@@ -272,18 +266,24 @@ def test_mark_lead_sent_unknown_id_no_exception(db):
 
 
 # ---------------------------------------------------------------------------
-# fail_lead — nested session bug : le statut est rollbacké silencieusement.
-# On vérifie uniquement qu'aucune exception ne s'échappe.
+# fail_lead — nested session bug FIXÉ : le statut est maintenant persisté.
 # ---------------------------------------------------------------------------
 
 
 def test_fail_lead_no_exception_with_reason(db_with_lead):
-    # Known behavior: SQLite nested session rolls back the status update.
     db_with_lead.fail_lead("lead_001", "TIMEOUT")  # must not raise
 
 
+def test_fail_lead_persists_status(db_with_lead):
+    """Après fix du nested rollback, le statut FAILED_* doit être persisté."""
+    db_with_lead.fail_lead("lead_001", "TIMEOUT")
+    with db_with_lead.session() as conn:
+        row = conn.execute("SELECT status FROM leads WHERE id='lead_001'").fetchone()
+    assert row[0] == "FAILED_TIMEOUT"
+
+
 def test_fail_lead_no_exception_default_reason(db_with_lead):
-    db_with_lead.fail_lead("lead_001")  # must not raise
+    db_with_lead.fail_lead("lead_001")  # must not raises
 
 
 # ---------------------------------------------------------------------------
@@ -684,6 +684,37 @@ def test_get_backlog_count_after_insert(db):
 
 
 # ---------------------------------------------------------------------------
+# Schema migration — program column in leads table (V15)
+# ---------------------------------------------------------------------------
+
+
+def test_leads_table_has_program_column(db):
+    """La colonne 'program' doit exister dans la table leads après migration V15."""
+    with db.session() as conn:
+        cursor = conn.execute("PRAGMA table_info(leads)")
+        columns = [row[1] for row in cursor.fetchall()]
+    assert "program" in columns
+
+
+def test_leads_program_column_accepts_value(db):
+    """La colonne 'program' doit accepter des valeurs TEXT."""
+    db.insert_raw_lead(
+        {"id": "prog_col_test", "source": "test", "author": "user", "url": "", "text": "x"}
+    )
+    with db.session() as conn:
+        conn.execute("UPDATE leads SET program='TEST_PROGRAM' WHERE id='prog_col_test'")
+        row = conn.execute("SELECT program FROM leads WHERE id='prog_col_test'").fetchone()
+    assert row[0] == "TEST_PROGRAM"
+
+
+def test_schema_version_is_15(db):
+    """Le schéma doit être à la version 15 après migration."""
+    with db.session() as conn:
+        row = conn.execute("SELECT MAX(version) FROM _schema_version").fetchone()
+    assert row[0] == 15
+
+
+# ---------------------------------------------------------------------------
 # get_program_leaderboard
 # ---------------------------------------------------------------------------
 
@@ -1026,8 +1057,7 @@ def test_register_conversion_event_already_converted(db_with_lead):
 def test_register_conversion_event_new_lead_returns_true(db_with_lead):
     """
     Conversion d'un lead NEW → retourne True.
-    Note: le statut reste 'NEW' en SQLite car confirm_lead_hold déclenche
-    un nested session qui rollback la transaction outer (bug connu).
+    Le nested rollback est corrigé : confirm_lead_hold reçoit _conn.
     Coverage: lignes 786-839 + 841-870 + 917.
     """
     result = db_with_lead.register_conversion_event("lead_001", 75.0)
@@ -1040,17 +1070,33 @@ def test_register_conversion_event_with_transaction_id(db_with_lead):
     assert result is True
 
 
-def test_register_conversion_event_covers_matrix_logic(db_with_lead):
+def test_register_conversion_event_covers_double_dip_logic(db_with_lead):
     """
-    Avec assigned_program='BOURSOBANK', le code définit NEXT_STEP_MATRIX et
-    cherche next_step. En SQLite, 'assigned_program' in row vérifie les
-    VALEURS (pas les clés) → current_program reste 'UNKNOWN' → next_step=None.
-    Lignes 841-870 sont couvertes même si if next_step: est False.
+    Avec assigned_program='BOURSOBANK', la logique double-dip doit s'exécuter
+    et créer un nouveau lead AUTO_ dans la table leads.
+    Le fix 'row.keys()' permet de détecter assigned_program correctement.
     """
     with db_with_lead.session() as conn:
         conn.execute("UPDATE leads SET assigned_program='BOURSOBANK' WHERE id='lead_001'")
     result = db_with_lead.register_conversion_event("lead_001", 50.0)
-    assert result is True  # retourne True même si next_step=None
+    assert result is True
+    # Vérifier que le lead AUTO a été créé (double-dip)
+    with db_with_lead.session() as conn:
+        rows = conn.execute("SELECT id FROM leads WHERE id LIKE 'AUTO_%'").fetchall()
+    assert len(rows) >= 1
+
+
+def test_register_conversion_event_covers_matrix_logic(db_with_lead):
+    """
+    Autre programme dans la matrix → déclenche aussi le double-dip.
+    """
+    with db_with_lead.session() as conn:
+        conn.execute("UPDATE leads SET assigned_program='BINANCE' WHERE id='lead_001'")
+    result = db_with_lead.register_conversion_event("lead_001", 50.0)
+    assert result is True
+    with db_with_lead.session() as conn:
+        rows = conn.execute("SELECT id FROM leads WHERE id LIKE 'AUTO_%'").fetchall()
+    assert len(rows) >= 1
 
 
 # ---------------------------------------------------------------------------

@@ -65,7 +65,7 @@ class NexusDB:
     """
 
     _thread_local = threading.local()
-    CURRENT_SCHEMA_VERSION = 14
+    CURRENT_SCHEMA_VERSION = 15
 
     # Hashing Salt — loaded at class definition time.
     # Override in production: PRIVACY_SALT=<random-hex-32> in the environment.
@@ -369,14 +369,16 @@ class NexusDB:
                     )
                     self._apply_migrations(conn, current_ver)
 
-                if not self.use_postgres:
-                    try:
-                        conn.execute("PRAGMA wal_checkpoint(PASSIVE);")
-                        conn.execute("PRAGMA optimize;")
-                    except Exception:
-                        pass
-
                 self._reset_stuck_dispatches(conn)
+
+            # PRAGMAs must run outside a transaction to avoid "database table is locked"
+            if not self.use_postgres:
+                try:
+                    conn = self._get_conn()
+                    conn.execute("PRAGMA wal_checkpoint(PASSIVE);")
+                    conn.execute("PRAGMA optimize;")
+                except Exception:
+                    pass
 
         except Exception as e:
             logger.critical(f"❌ DB Migration Error: {e}")
@@ -406,6 +408,7 @@ class NexusDB:
                     author TEXT, -- Hashed Node ID (SHA-256)
                     url TEXT,
                     comment_text TEXT, -- Technical Payload (Sanitized)
+                    program TEXT,
                     ai_status TEXT DEFAULT 'PENDING',
                     ai_confidence REAL DEFAULT 0.0,
                     ai_draft TEXT,
@@ -675,6 +678,16 @@ class NexusDB:
                 "INSERT INTO _schema_version (version, updated_at) VALUES (14, ?)", (ts_now,)
             )
 
+        if current_ver < 15:
+            logger.info("📋 Application Migration V15: Add program column to leads...")
+            try:
+                conn.execute("ALTER TABLE leads ADD COLUMN program TEXT")
+            except Exception as e:
+                logger.warning(f"⚠️ Migration V15 warning (column exists?): {e}")
+            conn.execute(
+                "INSERT INTO _schema_version (version, updated_at) VALUES (15, ?)", (ts_now,)
+            )
+
     def escape_like_string(self, text: str) -> str:
         if not text:
             return ""
@@ -812,9 +825,10 @@ class NexusDB:
 
                 # Determine Current Program
                 current_program = "UNKNOWN"
-                if "assigned_program" in row and row["assigned_program"]:
+                row_keys = row.keys()
+                if "assigned_program" in row_keys and row["assigned_program"]:
                     current_program = str(row["assigned_program"]).upper()
-                elif "program" in row and row["program"]:
+                elif "program" in row_keys and row["program"]:
                     current_program = str(row["program"]).upper()
 
                 if status == "CONVERTED":
@@ -844,7 +858,7 @@ class NexusDB:
                 )
 
                 # CONFIRM RESOURCE CONSUMPTION (COMMIT TRANSACTION)
-                self.confirm_lead_hold(lead_id)
+                self.confirm_lead_hold(lead_id, _conn=conn)
 
                 # --- INTELLIGENT WORKFLOW: DOUBLE-DIP LOGIC ---
                 # Definition of the Transition Matrix based on Strategy Report
@@ -1356,100 +1370,121 @@ class NexusDB:
             logger.error(f"❌ Atomic Dispatch Error: {e}")
             return False
 
-    def confirm_lead_hold(self, lead_id: str) -> bool:
+    def confirm_lead_hold(self, lead_id: str, _conn=None) -> bool:
         """
         --- 2PC PHASE 2a: COMMIT (CONSUMPTION) ---
         Confirms resource consumption (SLA Met).
         "Reserved" funds are destroyed (Consumed permanently).
         """
         try:
-            with self.session(immediate=True) as conn:
-                row = conn.execute(
-                    "SELECT id, sponsor_id, cost_charged FROM dispatch_logs WHERE lead_id=? AND status='RESERVED'",
-                    (lead_id,),
-                ).fetchone()
+            if _conn is not None:
+                conn = _conn
+                needs_session = False
+            else:
+                needs_session = True
 
-                if not row:
-                    return False
+            if needs_session:
+                with self.session(immediate=True) as conn:
+                    return self._do_confirm_lead_hold(conn, lead_id)
+            else:
+                return self._do_confirm_lead_hold(conn, lead_id)
 
-                log_id = row["id"] if self.use_postgres else row[0]
-                sponsor_id = row["sponsor_id"] if self.use_postgres else row[1]
-                cost = row["cost_charged"] if self.use_postgres else row[2]
-
-                # Amount is already in "Reserved", just subtract it to "pay" for service
-                # NOTE: The funds were already moved from 'available' to 'reserved'.
-                # Now we simply remove them from 'reserved' (burn them) and log the consumption.
-                conn.execute(
-                    """
-                    UPDATE sponsors 
-                    SET balance_reserved = balance_reserved - ? 
-                    WHERE id=?
-                """,
-                    (cost, sponsor_id),
-                )
-
-                conn.execute("UPDATE dispatch_logs SET status='CONSUMED' WHERE id=?", (log_id,))
-
-                # Financial Traceability
-                conn.execute(
-                    """
-                    INSERT INTO ledger (transaction_date, type, partner_id, amount, reference_external, description, created_at)
-                    VALUES (?, 'CONSUMPTION', ?, ?, ?, ?, ?)
-                """,
-                    (
-                        time.time(),
-                        sponsor_id,
-                        -cost,
-                        lead_id,
-                        "Resource Consumption (SLA Met)",
-                        time.time(),
-                    ),
-                )
-
-                logger.info(f"💰 CREDIT CONSUMED: {sponsor_id} -{cost}€ (Service Delivered)")
-                return True
         except Exception as e:
             logger.error(f"❌ Resource Consumption Error: {e}")
             return False
 
-    def release_lead_hold(self, lead_id: str) -> bool:
+    def _do_confirm_lead_hold(self, conn, lead_id: str) -> bool:
+        row = conn.execute(
+            "SELECT id, sponsor_id, cost_charged FROM dispatch_logs WHERE lead_id=? AND status='RESERVED'",
+            (lead_id,),
+        ).fetchone()
+
+        if not row:
+            return False
+
+        log_id = row["id"] if self.use_postgres else row[0]
+        sponsor_id = row["sponsor_id"] if self.use_postgres else row[1]
+        cost = row["cost_charged"] if self.use_postgres else row[2]
+
+        conn.execute(
+            """
+            UPDATE sponsors
+            SET balance_reserved = balance_reserved - ?
+            WHERE id=?
+        """,
+            (cost, sponsor_id),
+        )
+
+        conn.execute("UPDATE dispatch_logs SET status='CONSUMED' WHERE id=?", (log_id,))
+
+        conn.execute(
+            """
+            INSERT INTO ledger (transaction_date, type, partner_id, amount, reference_external, description, created_at)
+            VALUES (?, 'CONSUMPTION', ?, ?, ?, ?, ?)
+        """,
+            (
+                time.time(),
+                sponsor_id,
+                -cost,
+                lead_id,
+                "Resource Consumption (SLA Met)",
+                time.time(),
+            ),
+        )
+
+        logger.info(f"💰 CREDIT CONSUMED: {sponsor_id} -{cost}€ (Service Delivered)")
+        return True
+
+    def release_lead_hold(self, lead_id: str, _conn=None) -> bool:
         """
         --- 2PC PHASE 2b: ROLLBACK (RELEASE) ---
         Releases reservation on Technical Failure (SLA Breach).
         "Reserved" funds return to "Available".
         """
         try:
-            with self.session(immediate=True) as conn:
-                row = conn.execute(
-                    "SELECT id, sponsor_id, cost_charged FROM dispatch_logs WHERE lead_id=? AND status='RESERVED'",
-                    (lead_id,),
-                ).fetchone()
+            if _conn is not None:
+                conn = _conn
+                needs_session = False
+            else:
+                needs_session = True
 
-                if not row:
-                    return False
+            if needs_session:
+                with self.session(immediate=True) as conn:
+                    return self._do_release_lead_hold(conn, lead_id)
+            else:
+                return self._do_release_lead_hold(conn, lead_id)
 
-                log_id = row["id"] if self.use_postgres else row[0]
-                sponsor_id = row["sponsor_id"] if self.use_postgres else row[1]
-                cost = row["cost_charged"] if self.use_postgres else row[2]
-
-                # Refund: Reserved -> Available
-                conn.execute(
-                    """
-                    UPDATE sponsors 
-                    SET balance_reserved = balance_reserved - ?,
-                        balance_available = balance_available + ?
-                    WHERE id=?
-                """,
-                    (cost, cost, sponsor_id),
-                )
-
-                conn.execute("UPDATE dispatch_logs SET status='RELEASED' WHERE id=?", (log_id,))
-
-                logger.info(f"↩️ CREDIT RELEASED: {sponsor_id} +{cost}€ (SLA Breach / Tech Fail)")
-                return True
         except Exception as e:
             logger.error(f"❌ Release Reservation Error: {e}")
             return False
+
+    def _do_release_lead_hold(self, conn, lead_id: str) -> bool:
+        row = conn.execute(
+            "SELECT id, sponsor_id, cost_charged FROM dispatch_logs WHERE lead_id=? AND status='RESERVED'",
+            (lead_id,),
+        ).fetchone()
+
+        if not row:
+            return False
+
+        log_id = row["id"] if self.use_postgres else row[0]
+        sponsor_id = row["sponsor_id"] if self.use_postgres else row[1]
+        cost = row["cost_charged"] if self.use_postgres else row[2]
+
+        conn.execute(
+            """
+            UPDATE sponsors
+            SET balance_reserved = balance_reserved - ?,
+                balance_available = balance_available + ?
+            WHERE id=?
+        """,
+            (cost, cost, sponsor_id),
+        )
+
+        conn.execute("UPDATE dispatch_logs SET status='RELEASED' WHERE id=?", (log_id,))
+
+        logger.info(f"↩️ CREDIT RELEASED: {sponsor_id} +{cost}€ (SLA Breach / Tech Fail)")
+        return True
 
     def insert_raw_lead(self, lead: Dict[str, Any], conn=None) -> bool:
         """
@@ -1598,8 +1633,7 @@ class NexusDB:
                     "UPDATE leads SET status=?, updated_at=? WHERE id=?",
                     (f"FAILED_{reason}", time.time(), lead_id),
                 )
-                # Release reservation on failure (2PC Rollback)
-                self.release_lead_hold(lead_id)
+                self.release_lead_hold(lead_id, _conn=conn)
         except Exception:
             pass
 

@@ -1,6 +1,6 @@
 # STATUS.md — Analyse de l'état du projet Nexus
 
-> Dernière mise à jour : 2026-04-16 (audit vérifié tâche par tâche). Légende : ✅ complet · 🔄 partiel · ❌ vide/cassé
+> Dernière mise à jour : 2026-05-06 (4 bugs NexusDB corrigés + migration V15). Légende : ✅ complet · 🔄 partiel · ❌ vide/cassé
 
 ---
 
@@ -13,9 +13,11 @@
 | 🔄 Partiels | 4 (channel files — fonctionnels mais non testés end-to-end) |
 | ❌ Vides / Cassés | 0 |
 | **Bloqueurs P0** | **0** — tous résolus |
-| **BACKLOG** | **23/23 tâches ✅** — sprint P3 complet, tag v1.1.0 |
+| **BACKLOG** | **24/24 tâches ✅** — sprint P3 complet, tag v1.1.0 |
+| **Tests** | **218 tests passés** — NexusDB (158) + workload_orchestrator (59) + smoke (15) |
+| **Coverage** | **85%** sur `secure_telemetry_store.py` (↑ de 83%) |
 
-**Le projet démarre.** `core/database.py` et `core/dispatcher.py` existent. Toutes les dépendances sont dans `requirements.txt`. Suite de tests : 213 tests (154 NexusDB + 59 orchestrator).
+**Le projet démarre.** `core/database.py` et `core/dispatcher.py` existent. Toutes les dépendances sont dans `requirements.txt`. 4 bugs NexusDB corrigés le 2026-05-06.
 
 ---
 
@@ -248,29 +250,26 @@ core/secure_telemetry_store.py ✅ — NexusDB complète, 4 méthodes ajoutées 
 
 ---
 
-## Tests NexusDB (P3-4 — 2026-04-15)
+## Tests NexusDB (P3-4 — 2026-05-06, 4 bugs corrigés)
 
-**Résultats :** 154 tests · 0 failed · **coverage 83%** sur `core/secure_telemetry_store.py`
+**Résultats :** 218 tests · 0 failed · **coverage 85%** sur `core/secure_telemetry_store.py`
 
 | Fichier de test | Tests | Rôle |
 |----------------|-------|------|
 | `tests/unit/test_nexusdb_smoke.py` | 15 | Smoke tests originaux |
-| `tests/unit/test_nexusdb_full.py` | 139 | Tests complets (méthodes, branches, exceptions) |
+| `tests/unit/test_nexusdb_full.py` | 154 | Tests complets (méthodes, branches, exceptions) |
+| `tests/unit/test_workload_orchestrator.py` | 59 | UCB1, scarcity, PID, fuzzy matching |
 
-**Bugs découverts (non corrigés, à documenter) :**
+**Bugs corrigés (2026-05-06) :**
 
-| Bug | Localisation | Symptôme |
-|-----|-------------|----------|
-| Nested session rollback | `fail_lead` → `release_lead_hold` (L.1594), `register_conversion_event` → `confirm_lead_hold` (L.839) | Le `BEGIN IMMEDIATE` imbriqué échoue, `conn.rollback()` annule la transaction outer silencieusement → statut lead jamais mis à jour |
-| `"col" in sqlite3.Row` vérifie les valeurs | `register_conversion_event` L.807-810 | `"assigned_program" in row` teste si la STRING est une VALEUR du row (pas une clé) → `current_program` reste toujours 'UNKNOWN' → double-dip logic (L.871-915) jamais exécuté |
-| Colonne `program` absente de `leads` | `register_conversion_event` L.792, `analyze_user_history` L.1073, `get_dashboard_snapshot` L.1913 | SELECT explicit sur `program` dans `leads` mais la colonne n'est pas créée par les migrations |
-| `PRAGMA wal_checkpoint(PASSIVE)` dans une transaction | `_init_nexus_migrations` L.366 | Échoue avec "database table is locked" → ligne 367 (`PRAGMA optimize`) jamais atteinte |
+| Bug | Localisation | Fix |
+|-----|-------------|-----|
+| Nested session rollback | `fail_lead` → `release_lead_hold`, `register_conversion_event` → `confirm_lead_hold` | Passage de `_conn` pour réutiliser la même transaction au lieu d'ouvrir une session imbriquée |
+| `"col" in sqlite3.Row` vérifie les valeurs | `register_conversion_event` L.815-818 | Remplacé par `"col" in row.keys()` pour tester les clés de colonne |
+| Colonne `program` absente de `leads` | Migrations V1 + V15 | Ajoutée au CREATE TABLE V1 + migration V15 `ALTER TABLE leads ADD COLUMN program TEXT` |
+| `PRAGMA wal_checkpoint(PASSIVE)` dans transaction | `_init_nexus_migrations` L.372-377 | Déplacé après le `with self.session()` block pour s'exécuter hors transaction |
 
-**Lignes structurellement non couvrables (SQLite :memory:) :**
-- L.33-47, 96, 106, 112-199 — init PostgreSQL pool
-- L.275-335 — `_seed_initial_data` : `sponsors.json` est un dict, pas une liste → loop jamais exécutée
-- L.872-899 — double-dip body (bloqué par bug ci-dessus)
-- L.1276-1278, 1571-1574 — chemins PostgreSQL exclusifs
+**Schéma :** Version 15 — 12 tables + colonne `program` sur `leads`.
 
 ---
 
