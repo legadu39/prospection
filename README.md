@@ -4,6 +4,8 @@ Nexus is a fully automated **affiliate lead acquisition and routing platform** b
 
 All user identities are hashed on ingestion (SHA-256 + rotating salt). Every outbound message carries a legal disclaimer. No PII is ever stored in plain text.
 
+**Stack:** Python, FastAPI, Playwright, React / JavaScript, SQLite (développement), PostgreSQL (production), Docker.
+
 ---
 
 [![CI](https://github.com/legadu39/prospection/actions/workflows/ci.yml/badge.svg)](https://github.com/legadu39/prospection/actions/workflows/ci.yml)
